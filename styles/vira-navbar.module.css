@@ -1,0 +1,226 @@
+.viraNavbar {
+    background-color: #ffffff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.viraNavbarContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+}
+
+.viraNavbarLogo {
+    flex-shrink: 0;
+}
+
+.viraNavbarLogoLink {
+    text-decoration: none;
+    color: inherit;
+}
+
+.viraNavbarLogoText {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    letter-spacing: -0.025em;
+}
+
+.viraNavbarMobileToggle {
+    display: none;
+    flex-direction: column;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    gap: 4px;
+}
+
+.viraNavbarHamburger {
+    width: 24px;
+    height: 3px;
+    background-color: #374151;
+    transition: all 0.3s ease;
+    border-radius: 2px;
+}
+
+.viraNavbarMobileToggleActive .viraNavbarHamburger:nth-child(1) {
+    transform: rotate(45deg) translate(6px, 6px);
+}
+
+.viraNavbarMobileToggleActive .viraNavbarHamburger:nth-child(2) {
+    opacity: 0;
+}
+
+.viraNavbarMobileToggleActive .viraNavbarHamburger:nth-child(3) {
+    transform: rotate(-45deg) translate(6px, -6px);
+}
+
+.viraNavbarMenu {
+    display: flex;
+}
+
+.viraNavbarList {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 2rem;
+}
+
+.viraNavbarItem {
+    position: relative;
+}
+
+.viraNavbarLink {
+    text-decoration: none;
+    color: #374151;
+    font-weight: 500;
+    padding: 0.5rem 0;
+    transition: color 0.2s ease;
+    position: relative;
+}
+
+.viraNavbarLink:hover {
+    color: #2563eb;
+}
+
+.viraNavbarLink::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: #2563eb;
+    transition: width 0.3s ease;
+}
+
+.viraNavbarLink:hover::after {
+    width: 100%;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+    .viraNavbarMobileToggle {
+        display: flex;
+    }
+
+    .viraNavbarMenu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background-color: #ffffff;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transform: translateY(-100%);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .viraNavbarMenuActive {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .viraNavbarList {
+        flex-direction: column;
+        gap: 0;
+        padding: 1rem 0;
+    }
+
+    .viraNavbarItem {
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .viraNavbarItem:last-child {
+        border-bottom: none;
+    }
+
+    .viraNavbarLink {
+        display: block;
+        padding: 1rem 1.5rem;
+        color: #374151;
+    }
+
+    .viraNavbarLink::after {
+        display: none;
+    }
+
+    .viraNavbarLink:hover {
+        background-color: #f9fafb;
+        color: #2563eb;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .viraNavbar {
+        background-color: #1f2937;
+        border-bottom-color: #374151;
+    }
+
+    .viraNavbarLogoText {
+        color: #f9fafb;
+    }
+
+    .viraNavbarHamburger {
+        background-color: #d1d5db;
+    }
+
+    .viraNavbarLink {
+        color: #d1d5db;
+    }
+
+    .viraNavbarLink:hover {
+        color: #60a5fa;
+    }
+
+    .viraNavbarLink::after {
+        background-color: #60a5fa;
+    }
+
+    .viraNavbarMenu {
+        background-color: #1f2937;
+    }
+
+    .viraNavbarItem {
+        border-bottom-color: #374151;
+    }
+
+    .viraNavbarLink:hover {
+        background-color: #374151;
+        color: #60a5fa;
+    }
+}
+
+/* Tablet Styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .viraNavbarContainer {
+        padding: 0 1.5rem;
+    }
+
+    .viraNavbarList {
+        gap: 1.5rem;
+    }
+}
+
+/* Large Screen Styles */
+@media (min-width: 1025px) {
+    .viraNavbarContainer {
+        padding: 0 2rem;
+    }
+
+    .viraNavbarList {
+        gap: 2.5rem;
+    }
+}
