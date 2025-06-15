@@ -3,6 +3,8 @@ import { getLanguageByCode, getLanguages } from "@/lib/language-utils";
 import { LanguageProvider } from '@/lib/language-context';
 import { Metadata } from "next";
 import { LanguageHtmlUpdater } from "@/components/language-html-updater";
+import { AOSProvider } from "../../components/aos-provider";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 interface LanguageLayoutProps {
     children: React.ReactNode;
@@ -52,11 +54,13 @@ export default async function LanguageLayout({
                 language={currentLanguage.code}
                 direction={currentLanguage.code === 'ar' ? 'rtl' : 'ltr'}
             />
-            <div className="min-h-screen flex flex-col">
-                <main className="flex-1">
-                    {children}
-                </main>
-            </div>
+            <AOSProvider>
+                <div className="min-h-screen flex flex-col">
+                    <main className="flex-1">
+                        {children}
+                    </main>
+                </div>
+            </AOSProvider>
         </LanguageProvider>
     );
 } 

@@ -75,10 +75,21 @@ export async function POST(
                     globalPageId: id,
                     languageId: targetLanguageId,
                     title: "Yeni Sayfa",
-                    description: ""
+                    description: "",
+                    slug: "yeni-sayfa"
                 }
             })
         }
+
+        // Benzersiz ID oluştur
+        const existingModules = await prisma.pageModule.findMany({
+            where: {
+                type: type
+            }
+        })
+
+        const moduleCount = existingModules.length + 1
+        const uniqueId = `vira-${type.toLowerCase().replace('_', '-')}-${moduleCount}`
 
         // Modülü oluştur
         const newModule = await prisma.pageModule.create({
@@ -86,7 +97,10 @@ export async function POST(
                 pageContentId: pageContent.id,
                 languageId: targetLanguageId,
                 type,
-                content: content as any,
+                content: {
+                    ...content,
+                    uniqueId: uniqueId
+                } as any,
                 order: order || 0,
                 isActive: true
             }

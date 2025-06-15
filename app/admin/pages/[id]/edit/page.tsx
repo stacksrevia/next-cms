@@ -30,6 +30,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import ReactCountryFlag from 'react-country-flag'
+import { TextImageModal } from "@/components/admin/text-image-modal"
 
 interface Module {
     id: string
@@ -61,13 +62,13 @@ interface Page {
     isActive: boolean
     createdAt: string
     updatedAt: string
-    language: Language
+    language?: Language
     parent?: {
         id: string
         title: string
         slug: string
     }
-    modules: Module[]
+    modules?: Module[]
 }
 
 interface FormData {
@@ -89,6 +90,8 @@ export default function PageEditor() {
     const [currentLanguage, setCurrentLanguage] = useState<Language | null>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
+    const [editingModule, setEditingModule] = useState<Module | null>(null)
+    const [isModuleModalOpen, setIsModuleModalOpen] = useState(false)
 
     const [formData, setFormData] = useState<FormData>({
         title: "",
@@ -108,17 +111,20 @@ export default function PageEditor() {
         try {
             const response = await fetch("/api/admin/languages")
             if (response.ok) {
-                const data = await response.json()
-                setLanguages(data)
+                const result = await response.json()
+                // API'den gelen veri { languages: [...] } formatında
+                const languagesData = result.languages || []
+                setLanguages(languagesData)
 
                 // Varsayılan dili seç
-                const defaultLang = data.find((lang: Language) => lang.isDefault)
+                const defaultLang = languagesData.find((lang: Language) => lang.isDefault)
                 if (defaultLang) {
                     setCurrentLanguage(defaultLang)
                 }
             }
         } catch (error) {
             console.error("Error fetching languages:", error)
+            toast.error("Diller yüklenirken hata oluştu")
         }
     }
 
@@ -127,6 +133,12 @@ export default function PageEditor() {
             const response = await fetch(`/api/admin/pages/${pageId}`)
             if (response.ok) {
                 const data = await response.json()
+
+                // Veri yapısını kontrol et
+                if (!data || typeof data !== 'object') {
+                    throw new Error('Geçersiz sayfa verisi')
+                }
+
                 setPage(data)
                 setFormData({
                     title: data.title || "",
@@ -141,7 +153,8 @@ export default function PageEditor() {
                     setCurrentLanguage(data.language)
                 }
             } else {
-                toast.error("Sayfa yüklenirken hata oluştu")
+                const errorData = await response.json().catch(() => ({}))
+                toast.error(errorData.error || "Sayfa yüklenirken hata oluştu")
             }
         } catch (error) {
             console.error("Error fetching page:", error)
@@ -151,12 +164,55 @@ export default function PageEditor() {
         }
     }
 
-    const handleLanguageChange = (language: Language) => {
+    const handleLanguageChange = async (language: Language) => {
         setCurrentLanguage(language)
-        // TODO: Dil değiştirildiğinde sayfayı yeniden yükle
+        setLoading(true)
+
+        try {
+            // Seçilen dil için sayfa içeriğini yükle
+            const response = await fetch(`/api/admin/pages/${pageId}?languageId=${language.id}`)
+            if (response.ok) {
+                const data = await response.json()
+
+                // Form verilerini güncelle
+                setFormData({
+                    title: data.title || "",
+                    description: data.description || "",
+                    slug: data.slug || "",
+                    seoTitle: data.seoTitle || "",
+                    seoDescription: data.seoDescription || "",
+                    isActive: data.isActive ?? true,
+                })
+
+                // Sayfa verilerini güncelle (modüller için)
+                setPage(prev => prev ? {
+                    ...prev,
+                    title: data.title || prev.title,
+                    description: data.description || prev.description,
+                    slug: data.slug || prev.slug,
+                    seoTitle: data.seoTitle || prev.seoTitle,
+                    seoDescription: data.seoDescription || prev.seoDescription,
+                    modules: data.modules || []
+                } : null)
+
+                toast.success(`${language.name} dili yüklendi`)
+            } else {
+                toast.error("Dil içeriği yüklenirken hata oluştu")
+            }
+        } catch (error) {
+            console.error("Error loading language content:", error)
+            toast.error("Dil içeriği yüklenirken hata oluştu")
+        } finally {
+            setLoading(false)
+        }
     }
 
     const handleSave = async () => {
+        if (!currentLanguage) {
+            toast.error("Lütfen bir dil seçin")
+            return
+        }
+
         setSaving(true)
         try {
             const response = await fetch(`/api/admin/pages/${pageId}`, {
@@ -164,12 +220,16 @@ export default function PageEditor() {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({
+                    ...formData,
+                    languageId: currentLanguage.id
+                }),
             })
 
             if (response.ok) {
-                toast.success("Sayfa başarıyla kaydedildi")
-                fetchPage() // Sayfayı yeniden yükle
+                toast.success(`${currentLanguage.name} dili için sayfa başarıyla kaydedildi`)
+                // Mevcut dil için sayfayı yeniden yükle
+                await handleLanguageChange(currentLanguage)
             } else {
                 const error = await response.json()
                 toast.error(error.message || "Kaydetme sırasında hata oluştu")
@@ -183,6 +243,11 @@ export default function PageEditor() {
     }
 
     const addModule = async (moduleType: string) => {
+        if (!currentLanguage) {
+            toast.error("Lütfen bir dil seçin")
+            return
+        }
+
         try {
             const response = await fetch(`/api/admin/pages/${pageId}/modules`, {
                 method: "POST",
@@ -192,15 +257,18 @@ export default function PageEditor() {
                 body: JSON.stringify({
                     type: moduleType,
                     content: getDefaultModuleContent(moduleType),
-                    order: page?.modules.length || 0,
+                    order: (Array.isArray(page?.modules) ? page.modules.length : 0),
+                    languageId: currentLanguage.id
                 }),
             })
 
             if (response.ok) {
-                toast.success("Modül eklendi")
-                fetchPage()
+                toast.success(`${currentLanguage.name} dili için modül eklendi`)
+                // Mevcut dil için sayfayı yeniden yükle
+                await handleLanguageChange(currentLanguage)
             } else {
-                toast.error("Modül eklenirken hata oluştu")
+                const error = await response.json()
+                toast.error(error.message || "Modül eklenirken hata oluştu")
             }
         } catch (error) {
             console.error("Error adding module:", error)
@@ -210,13 +278,6 @@ export default function PageEditor() {
 
     const getDefaultModuleContent = (type: string) => {
         switch (type) {
-            case "HERO":
-                return {
-                    title: "Ana Başlık",
-                    subtitle: "Alt başlık",
-                    buttonText: "Buton Metni",
-                    backgroundImage: ""
-                }
             case "TEXT_IMAGE":
                 return {
                     title: "Başlık",
@@ -224,14 +285,70 @@ export default function PageEditor() {
                     image: "",
                     imagePosition: "right"
                 }
-            case "GALLERY":
-                return {
-                    title: "Galeri",
-                    description: "Galeri açıklaması",
-                    images: []
-                }
             default:
                 return {}
+        }
+    }
+
+    const handleEditModule = (module: Module) => {
+        setEditingModule(module)
+        setIsModuleModalOpen(true)
+    }
+
+    const handleSaveModule = async (moduleContent: any) => {
+        if (!editingModule || !currentLanguage) return
+
+        try {
+            const response = await fetch(`/api/admin/pages/${pageId}/modules/${editingModule.id}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    content: moduleContent,
+                    languageId: currentLanguage.id
+                }),
+            })
+
+            if (response.ok) {
+                toast.success("Modül başarıyla güncellendi")
+                await handleLanguageChange(currentLanguage)
+            } else {
+                const error = await response.json()
+                toast.error(error.message || "Modül güncellenirken hata oluştu")
+            }
+        } catch (error) {
+            console.error("Error updating module:", error)
+            toast.error("Modül güncellenirken hata oluştu")
+        }
+    }
+
+    const handleDeleteModule = async (moduleId: string) => {
+        if (!currentLanguage) return
+
+        if (!confirm("Bu modülü silmek istediğinizden emin misiniz?")) return
+
+        try {
+            const response = await fetch(`/api/admin/pages/${pageId}/modules/${moduleId}`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    languageId: currentLanguage.id
+                }),
+            })
+
+            if (response.ok) {
+                toast.success("Modül başarıyla silindi")
+                await handleLanguageChange(currentLanguage)
+            } else {
+                const error = await response.json()
+                toast.error(error.message || "Modül silinirken hata oluştu")
+            }
+        } catch (error) {
+            console.error("Error deleting module:", error)
+            toast.error("Modül silinirken hata oluştu")
         }
     }
 
@@ -283,16 +400,16 @@ export default function PageEditor() {
                     <div className="flex items-center space-x-4">
                         <Select
                             value={currentLanguage?.id}
-                            onValueChange={(value) => {
+                            onValueChange={async (value) => {
                                 const language = languages.find(lang => lang.id === value)
-                                if (language) handleLanguageChange(language)
+                                if (language) await handleLanguageChange(language)
                             }}
                         >
                             <SelectTrigger className="w-40">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                {languages.map((language) => (
+                                {Array.isArray(languages) && languages.map((language) => (
                                     <SelectItem key={language.id} value={language.id}>
                                         <div className="flex items-center space-x-2">
                                             <ReactCountryFlag
@@ -414,7 +531,7 @@ export default function PageEditor() {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                {page.modules.length === 0 ? (
+                                {!Array.isArray(page.modules) || page.modules.length === 0 ? (
                                     <div className="text-center py-8 text-muted-foreground">
                                         <Grid3X3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
                                         <p>Henüz modül eklenmemiş</p>
@@ -441,10 +558,18 @@ export default function PageEditor() {
                                                                 <Badge variant={module.isActive ? "default" : "secondary"}>
                                                                     {module.isActive ? "Aktif" : "Pasif"}
                                                                 </Badge>
-                                                                <Button variant="outline" size="sm">
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => handleEditModule(module)}
+                                                                >
                                                                     <Edit className="h-4 w-4" />
                                                                 </Button>
-                                                                <Button variant="outline" size="sm">
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => handleDeleteModule(module.id)}
+                                                                >
                                                                     <Trash2 className="h-4 w-4" />
                                                                 </Button>
                                                             </div>
@@ -468,18 +593,27 @@ export default function PageEditor() {
                     <div className="p-4">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold">Modüller</h3>
-                            <Badge variant="outline">{page.modules.length} modül</Badge>
+                            <Badge variant="outline">{Array.isArray(page.modules) ? page.modules.length : 0} modül</Badge>
                         </div>
 
+                        {currentLanguage && (
+                            <div className="mb-4 p-3 bg-muted rounded-lg">
+                                <div className="flex items-center space-x-2 text-sm">
+                                    <ReactCountryFlag
+                                        countryCode={currentLanguage.flag}
+                                        svg
+                                        style={{
+                                            width: '1em',
+                                            height: '1em',
+                                        }}
+                                    />
+                                    <span className="font-medium">{currentLanguage.name}</span>
+                                    <span className="text-muted-foreground">dili için modül ekle</span>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="space-y-2">
-                            <Button
-                                variant="outline"
-                                className="w-full justify-start"
-                                onClick={() => addModule("HERO")}
-                            >
-                                <Plus className="mr-2 h-4 w-4" />
-                                Hero Modülü
-                            </Button>
                             <Button
                                 variant="outline"
                                 className="w-full justify-start"
@@ -488,18 +622,21 @@ export default function PageEditor() {
                                 <Plus className="mr-2 h-4 w-4" />
                                 Metin + Resim
                             </Button>
-                            <Button
-                                variant="outline"
-                                className="w-full justify-start"
-                                onClick={() => addModule("GALLERY")}
-                            >
-                                <Plus className="mr-2 h-4 w-4" />
-                                Galeri
-                            </Button>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Text Image Modal */}
+            <TextImageModal
+                isOpen={isModuleModalOpen}
+                onClose={() => {
+                    setIsModuleModalOpen(false)
+                    setEditingModule(null)
+                }}
+                onSave={handleSaveModule}
+                initialContent={editingModule?.content}
+            />
         </div>
     )
 } 

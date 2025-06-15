@@ -73,6 +73,44 @@ export async function GET(
 
         // İçerik formatla
         const content = globalPage.contents[0]
+
+        // Eğer belirli bir dil istendi ama içerik yoksa, boş içerik döndür
+        if (languageId && !content) {
+            const requestedLanguage = await prisma.language.findUnique({
+                where: { id: languageId }
+            })
+
+            const formattedPage = {
+                id: globalPage.id,
+                slug: globalPage.slug,
+                parentId: globalPage.parentId,
+                order: globalPage.order,
+                isActive: globalPage.isActive,
+                createdAt: globalPage.createdAt.toISOString(),
+                updatedAt: globalPage.updatedAt.toISOString(),
+                title: '',
+                description: null,
+                seoTitle: null,
+                seoDescription: null,
+                language: requestedLanguage,
+                modules: [],
+                parent: globalPage.parent ? {
+                    id: globalPage.parent.id,
+                    slug: globalPage.parent.slug,
+                    title: globalPage.parent.contents[0]?.title || 'Başlık Yok'
+                } : null,
+                children: globalPage.children.map(child => ({
+                    id: child.id,
+                    slug: child.slug,
+                    order: child.order,
+                    isActive: child.isActive,
+                    title: child.contents[0]?.title || 'Başlık Yok'
+                }))
+            }
+
+            return NextResponse.json(formattedPage)
+        }
+
         const formattedPage = {
             id: globalPage.id,
             slug: content?.slug || globalPage.slug,
@@ -139,6 +177,7 @@ export async function PATCH(
             })
 
             if (pageContent) {
+                // Mevcut içeriği güncelle
                 await prisma.pageContent.update({
                     where: { id: pageContent.id },
                     data: {
@@ -147,6 +186,19 @@ export async function PATCH(
                         ...(slug && { slug }),
                         ...(seoTitle !== undefined && { seoTitle }),
                         ...(seoDescription !== undefined && { seoDescription })
+                    }
+                })
+            } else {
+                // Yeni içerik oluştur
+                await prisma.pageContent.create({
+                    data: {
+                        globalPageId: id,
+                        languageId,
+                        title: title || 'Yeni Sayfa',
+                        description: description || null,
+                        slug: slug || 'yeni-sayfa',
+                        seoTitle: seoTitle || null,
+                        seoDescription: seoDescription || null
                     }
                 })
             }
