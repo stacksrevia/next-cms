@@ -61,7 +61,7 @@ export default function AdminLogin() {
                     toast.error("Bu alana erişim yetkiniz bulunmamaktadır.")
                 }
             }
-        } catch (error) {
+        } catch {
             toast.error("Bir hata oluştu. Lütfen tekrar deneyin.")
         } finally {
             setIsLoading(false)

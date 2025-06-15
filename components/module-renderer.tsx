@@ -203,7 +203,7 @@ function VideoModule({ content }: { content: any }) {
                     </div>
                 ) : (
                     <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                        <p className="text-muted-foreground">Video URL'si eklenmemiş</p>
+                        <p className="text-muted-foreground">Video URL&apos;si eklenmemiş</p>
                     </div>
                 )}
             </div>
@@ -304,7 +304,7 @@ function TestimonialsModule({ content }: { content: any }) {
                                 <CardContent className="p-6">
                                     <div className="mb-4">
                                         <p className="text-muted-foreground italic">
-                                            "{testimonial.text}"
+                                            &quot;{testimonial.text}&quot;
                                         </p>
                                     </div>
                                     <div className="flex items-center space-x-3">

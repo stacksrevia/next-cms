@@ -97,7 +97,7 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
                                 <ol className="text-sm text-blue-600 dark:text-blue-400 space-y-1 list-decimal list-inside">
                                     <li>PostgreSQL sunucusunun çalıştığından emin olun</li>
                                     <li><code className="bg-background px-1 rounded">cms</code> adında bir veritabanı oluşturun</li>
-                                    <li>Terminal'de <code className="bg-background px-1 rounded">npx prisma db push</code> komutunu çalıştırın</li>
+                                    <li>Terminal&apos;de <code className="bg-background px-1 rounded">npx prisma db push</code> komutunu çalıştırın</li>
                                     <li>Bu sayfayı yenileyin</li>
                                 </ol>
                             </div>

@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/table"
 import { CreatePageDialog } from "@/components/admin/create-page-dialog"
 import { toast } from "sonner"
+import ReactCountryFlag from 'react-country-flag'
 import {
     DndContext,
     closestCenter,
@@ -47,43 +48,72 @@ import {
     useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import Link from "next/link"
 
-interface Page {
+interface Language {
     id: string
-    title: string
-    description?: string
+    code: string
+    name: string
+    flag: string
+    isDefault: boolean
+    isActive: boolean
+}
+
+interface Module {
+    id: string
+    type: string
+    content: Record<string, unknown>
+    order: number
+    isActive: boolean
+}
+
+interface GlobalPage {
+    id: string
     slug: string
-    seoTitle?: string
-    seoDescription?: string
     parentId?: string | null
     order: number
     isActive: boolean
     createdAt: string
     updatedAt: string
+    // İçerik bilgileri (seçilen dil için)
+    title: string
+    description?: string
+    seoTitle?: string
+    seoDescription?: string
+    language?: Language
+    modules: Module[]
+    // Tüm dillerdeki içerikler
+    allContents?: {
+        id: string
+        languageId: string
+        title: string
+        description?: string
+        language: Language
+    }[]
+    // İlişkiler
     parent?: {
         id: string
-        title: string
         slug: string
-    }
+        title: string
+    } | null
     children?: {
         id: string
-        title: string
         slug: string
         order: number
+        isActive: boolean
+        title: string
     }[]
-    modules: any[]
     level?: number
 }
 
 // Sortable Row Component
-function SortableTableRow({ page, onToggleStatus, onEdit, onDelete, onToggleExpanded, expandedPages, renderPageTitle }: {
-    page: Page;
+function SortableTableRow({ page, onToggleStatus, onEdit, onDelete, renderPageTitle, isDragDisabled }: {
+    page: GlobalPage;
     onToggleStatus: (id: string, status: boolean) => void;
     onEdit: (id: string) => void;
     onDelete: (id: string) => void;
-    onToggleExpanded: (id: string) => void;
-    expandedPages: Set<string>;
-    renderPageTitle: (page: Page) => React.ReactNode;
+    renderPageTitle: (page: GlobalPage) => React.ReactNode;
+    isDragDisabled?: boolean;
 }) {
     const {
         attributes,
@@ -92,7 +122,10 @@ function SortableTableRow({ page, onToggleStatus, onEdit, onDelete, onToggleExpa
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: page.id })
+    } = useSortable({
+        id: page.id,
+        disabled: isDragDisabled
+    })
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -109,14 +142,20 @@ function SortableTableRow({ page, onToggleStatus, onEdit, onDelete, onToggleExpa
         >
             <TableCell>
                 <div className="flex items-center">
-                    <div
-                        {...attributes}
-                        {...listeners}
-                        className="cursor-grab active:cursor-grabbing p-2 mr-3 hover:bg-muted rounded-md transition-colors"
-                        title="Sürükleyerek sıralayın"
-                    >
-                        <GripVertical className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                    </div>
+                    {!isDragDisabled ? (
+                        <div
+                            {...attributes}
+                            {...listeners}
+                            className="cursor-grab active:cursor-grabbing p-2 mr-3 hover:bg-muted rounded-md transition-colors"
+                            title="Sürükleyerek sıralayın"
+                        >
+                            <GripVertical className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                        </div>
+                    ) : (
+                        <div className="p-2 mr-3" title="Belirli bir dil seçin">
+                            <GripVertical className="h-4 w-4 text-muted-foreground/30" />
+                        </div>
+                    )}
                     <div className="flex-1">
                         {renderPageTitle(page)}
                     </div>
@@ -126,6 +165,23 @@ function SortableTableRow({ page, onToggleStatus, onEdit, onDelete, onToggleExpa
                 <code className="text-sm bg-muted px-1 py-0.5 rounded">
                     /{page.slug}
                 </code>
+            </TableCell>
+            <TableCell>
+                {page.language ? (
+                    <div className="flex items-center gap-2">
+                        <ReactCountryFlag
+                            countryCode={page.language.flag}
+                            svg
+                            style={{
+                                width: '1em',
+                                height: '1em',
+                            }}
+                        />
+                        <span className="text-sm">{page.language.name}</span>
+                    </div>
+                ) : (
+                    <span className="text-muted-foreground text-sm">Tüm Diller</span>
+                )}
             </TableCell>
             <TableCell>
                 {page.parent ? (
@@ -147,9 +203,16 @@ function SortableTableRow({ page, onToggleStatus, onEdit, onDelete, onToggleExpa
                 </Badge>
             </TableCell>
             <TableCell>
-                <Badge variant="outline">
-                    {page.modules.length} modül
-                </Badge>
+                <div className="flex flex-col gap-1">
+                    <Badge variant="outline">
+                        {page.modules.length} modül
+                    </Badge>
+                    {page.allContents && (
+                        <Badge variant="secondary" className="text-xs">
+                            {page.allContents.length} dil
+                        </Badge>
+                    )}
+                </div>
             </TableCell>
             <TableCell className="text-right">
                 <div className="flex items-center justify-end space-x-2">
@@ -157,17 +220,15 @@ function SortableTableRow({ page, onToggleStatus, onEdit, onDelete, onToggleExpa
                         variant="outline"
                         size="sm"
                         onClick={() => onToggleStatus(page.id, page.isActive)}
+                        title={page.isActive ? "Pasif yap" : "Aktif yap"}
                     >
-                        {page.isActive ? (
-                            <EyeOff className="h-4 w-4" />
-                        ) : (
-                            <Eye className="h-4 w-4" />
-                        )}
+                        {page.isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={() => onEdit(page.id)}
+                        title="Düzenle"
                     >
                         <Edit className="h-4 w-4" />
                     </Button>
@@ -175,6 +236,8 @@ function SortableTableRow({ page, onToggleStatus, onEdit, onDelete, onToggleExpa
                         variant="outline"
                         size="sm"
                         onClick={() => onDelete(page.id)}
+                        title="Sil"
+                        className="text-red-600 hover:text-red-700"
                     >
                         <Trash2 className="h-4 w-4" />
                     </Button>
@@ -185,12 +248,14 @@ function SortableTableRow({ page, onToggleStatus, onEdit, onDelete, onToggleExpa
 }
 
 export default function PagesManagement() {
-    const [pages, setPages] = useState<Page[]>([])
+    const [pages, setPages] = useState<GlobalPage[]>([])
+    const [languages, setLanguages] = useState<Language[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
-    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
     const [expandedPages, setExpandedPages] = useState<Set<string>>(new Set())
+    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
 
+    // Drag and drop sensors
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
@@ -202,25 +267,43 @@ export default function PagesManagement() {
         })
     )
 
+    // Sayfaları getir
     const fetchPages = async () => {
         try {
-            const response = await fetch("/api/pages")
+            setLoading(true)
+            // Dil filtresi kaldırıldı, tüm sayfaları getir
+            const response = await fetch(`/api/admin/pages`)
             if (response.ok) {
                 const data = await response.json()
                 setPages(data.pages || [])
             } else {
-                toast.error("Sayfalar yüklenirken hata oluştu")
+                toast.error('Sayfalar yüklenirken hata oluştu')
             }
         } catch (error) {
-            toast.error("Sayfalar yüklenirken hata oluştu")
+            console.error('Error fetching pages:', error)
+            toast.error('Sayfalar yüklenirken hata oluştu')
         } finally {
             setLoading(false)
         }
     }
 
+    // Dilleri getir
+    const fetchLanguages = async () => {
+        try {
+            const response = await fetch("/api/admin/languages")
+            if (response.ok) {
+                const data = await response.json()
+                setLanguages(data.languages || [])
+            }
+        } catch (error) {
+            console.error('Error fetching languages:', error)
+        }
+    }
+
     useEffect(() => {
         fetchPages()
-    }, [])
+        fetchLanguages()
+    }, []) // selectedLanguage dependency kaldırıldı
 
     const toggleExpanded = (pageId: string) => {
         const newExpanded = new Set(expandedPages)
@@ -230,52 +313,6 @@ export default function PagesManagement() {
             newExpanded.add(pageId)
         }
         setExpandedPages(newExpanded)
-    }
-
-    // Otomatik sıralama fonksiyonu
-    const autoReorderPages = async () => {
-        try {
-            const rootPages = pages.filter(page => !page.parentId)
-            const pageOrders: { id: string; order: number; parentId?: string | null }[] = []
-
-            // Ana sayfaları alfabetik sırala
-            rootPages.sort((a, b) => a.title.localeCompare(b.title, 'tr'))
-            rootPages.forEach((page, index) => {
-                pageOrders.push({
-                    id: page.id,
-                    order: index, // 0'dan başla
-                    parentId: page.parentId
-                })
-
-                // Alt sayfaları da alfabetik sırala
-                const childPages = pages.filter(p => p.parentId === page.id)
-                childPages.sort((a, b) => a.title.localeCompare(b.title, 'tr'))
-                childPages.forEach((child, childIndex) => {
-                    pageOrders.push({
-                        id: child.id,
-                        order: childIndex, // 0'dan başla
-                        parentId: child.parentId
-                    })
-                })
-            })
-
-            const response = await fetch("/api/pages/reorder", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ pageOrders }),
-            })
-
-            if (response.ok) {
-                await fetchPages()
-                toast.success("Sayfalar otomatik olarak sıralandı")
-            } else {
-                toast.error("Sayfa sıralama güncellenirken hata oluştu")
-            }
-        } catch (error) {
-            toast.error("Sayfa sıralama güncellenirken hata oluştu")
-        }
     }
 
     // Drag end handler
@@ -318,7 +355,7 @@ export default function PagesManagement() {
         })
 
         try {
-            const response = await fetch("/api/pages/reorder", {
+            const response = await fetch("/api/admin/pages/reorder", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -332,17 +369,17 @@ export default function PagesManagement() {
             } else {
                 toast.error("Sayfa sıralama güncellenirken hata oluştu")
             }
-        } catch (error) {
+        } catch {
             toast.error("Sayfa sıralama güncellenirken hata oluştu")
         }
     }
 
     // Hiyerarşik sayfa listesi oluştur
-    const buildHierarchicalList = (pages: Page[]): Page[] => {
-        const result: Page[] = []
+    const buildHierarchicalList = (pages: GlobalPage[]): GlobalPage[] => {
+        const result: GlobalPage[] = []
         const rootPages = pages.filter(page => !page.parentId)
 
-        const addPageWithChildren = (page: Page, level: number = 0) => {
+        const addPageWithChildren = (page: GlobalPage, level: number = 0) => {
             const pageWithLevel = { ...page, level }
             result.push(pageWithLevel)
 
@@ -363,16 +400,18 @@ export default function PagesManagement() {
         return result
     }
 
-    const filteredPages = pages.filter(page =>
-        page.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        page.slug.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    const filteredPages = pages.filter(page => {
+        const matchesSearch = page.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            page.slug.toLowerCase().includes(searchTerm.toLowerCase())
 
-    const hierarchicalPages = searchTerm ? filteredPages : buildHierarchicalList(pages)
+        return matchesSearch
+    })
+
+    const hierarchicalPages = searchTerm ? filteredPages : buildHierarchicalList(filteredPages)
 
     const togglePageStatus = async (pageId: string, currentStatus: boolean) => {
         try {
-            const response = await fetch(`/api/pages/${pageId}`, {
+            const response = await fetch(`/api/admin/pages/${pageId}`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -386,7 +425,7 @@ export default function PagesManagement() {
             } else {
                 toast.error("Sayfa durumu güncellenirken hata oluştu")
             }
-        } catch (error) {
+        } catch {
             toast.error("Sayfa durumu güncellenirken hata oluştu")
         }
     }
@@ -400,12 +439,12 @@ export default function PagesManagement() {
             return
         }
 
-        if (!confirm("Bu sayfayı silmek istediğinizden emin misiniz?")) {
+        if (!confirm("Bu sayfayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
             return
         }
 
         try {
-            const response = await fetch(`/api/pages/${pageId}`, {
+            const response = await fetch(`/api/admin/pages/${pageId}`, {
                 method: "DELETE",
             })
 
@@ -415,12 +454,12 @@ export default function PagesManagement() {
             } else {
                 toast.error("Sayfa silinirken hata oluştu")
             }
-        } catch (error) {
+        } catch {
             toast.error("Sayfa silinirken hata oluştu")
         }
     }
 
-    const renderPageTitle = (page: any) => {
+    const renderPageTitle = (page: GlobalPage) => {
         const level = page.level || 0
         const hasChildren = page.children && page.children.length > 0
         const isExpanded = expandedPages.has(page.id)
@@ -431,7 +470,7 @@ export default function PagesManagement() {
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 p-0 mr-2"
+                        className="p-1 h-6 w-6 mr-2"
                         onClick={() => toggleExpanded(page.id)}
                     >
                         {isExpanded ? (
@@ -441,296 +480,147 @@ export default function PagesManagement() {
                         )}
                     </Button>
                 )}
-                {level > 0 && !hasChildren && (
-                    <ArrowRight className="h-4 w-4 mr-2 text-muted-foreground" />
+                {!hasChildren && level > 0 && (
+                    <div className="w-6 mr-2 flex justify-center">
+                        <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                    </div>
                 )}
-                <span className={level > 0 ? "text-muted-foreground" : "font-medium"}>
-                    {page.title}
-                </span>
-                {hasChildren && (
-                    <Badge variant="outline" className="ml-2 text-xs">
-                        {page.children.length} alt sayfa
-                    </Badge>
+                <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span className="font-medium">{page.title}</span>
+                {page.description && (
+                    <span className="text-sm text-muted-foreground ml-2">
+                        - {page.description}
+                    </span>
                 )}
             </div>
         )
     }
 
+    const handleEdit = (pageId: string) => {
+        window.location.href = `/admin/pages/${pageId}/edit`
+    }
+
+    const handlePageCreated = () => {
+        setIsCreateDialogOpen(false)
+        fetchPages()
+    }
+
     if (loading) {
         return (
-            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-                <div className="flex items-center justify-center min-h-[400px]">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="container mx-auto py-6">
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-muted-foreground">Sayfalar yükleniyor...</p>
+                    </div>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <div className="container mx-auto py-6 space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Sayfa Yönetimi</h2>
+                    <h1 className="text-3xl font-bold">Sayfa Yönetimi</h1>
                     <p className="text-muted-foreground">
-                        Web sitesi sayfalarını oluşturun ve yönetin - Sürükleyerek sıralayın (0'dan başlar)
+                        Global sayfa yapısını yönetin ve içerikleri düzenleyin
                     </p>
                 </div>
-                <div className="flex items-center space-x-2">
-                    <Button
-                        variant="outline"
-                        onClick={autoReorderPages}
-                        disabled={pages.length === 0}
-                    >
-                        Otomatik Sırala (A-Z)
-                    </Button>
-                    <Button onClick={() => setIsCreateDialogOpen(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Yeni Sayfa
-                    </Button>
-                </div>
+                <Button onClick={() => setIsCreateDialogOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Yeni Sayfa
+                </Button>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
-                            Toplam Sayfa
-                        </CardTitle>
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{pages.length}</div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
-                            Ana Sayfalar
-                        </CardTitle>
-                        <Folder className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">
-                            {pages.filter(p => !p.parentId).length}
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
-                            Alt Sayfalar
-                        </CardTitle>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">
-                            {pages.filter(p => p.parentId).length}
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
-                            Aktif Sayfalar
-                        </CardTitle>
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">
-                            {pages.filter(p => p.isActive).length}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Search and Filters */}
+            {/* Filters */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <GripVertical className="h-5 w-5 text-muted-foreground" />
-                        Sayfalar
-                    </CardTitle>
+                    <CardTitle>Filtreler</CardTitle>
                     <CardDescription>
-                        Tüm sayfalarınızı hiyerarşik olarak görüntüleyin ve yönetin
-                        <span className="block mt-1 text-blue-600 font-medium">
-                            💡 İpucu: Sayfaları sürükleyerek sıralayabilirsiniz
-                        </span>
+                        Sayfaları filtreleyerek istediğiniz içeriği bulun
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex items-center space-x-2 mb-4">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Sayfa ara..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-8"
-                            />
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex-1">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                                <Input
+                                    placeholder="Sayfa adı veya slug ara..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-10"
+                                />
+                            </div>
                         </div>
-                        {!searchTerm && (
-                            <Button
-                                variant="outline"
-                                onClick={() => {
-                                    const allPageIds = new Set(pages.filter(p => p.children && p.children.length > 0).map(p => p.id))
-                                    setExpandedPages(expandedPages.size === allPageIds.size ? new Set() : allPageIds)
-                                }}
-                            >
-                                {expandedPages.size > 0 ? "Tümünü Kapat" : "Tümünü Aç"}
-                            </Button>
-                        )}
                     </div>
+                </CardContent>
+            </Card>
 
-                    <div className="rounded-md border">
-                        {!searchTerm ? (
-                            <DndContext
-                                sensors={sensors}
-                                collisionDetection={closestCenter}
-                                onDragEnd={handleDragEnd}
+            {/* Pages Table */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>
+                        Sayfalar ({pages.length})
+                    </CardTitle>
+                    <CardDescription>
+                        Tüm sayfalar gösteriliyor. Düzenlemek için bir sayfaya tıklayın.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {hierarchicalPages.length === 0 ? (
+                        <div className="text-center py-8">
+                            <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                            <h3 className="text-lg font-medium mb-2">Henüz sayfa yok</h3>
+                            <p className="text-muted-foreground mb-4">
+                                İlk sayfanızı oluşturmak için "Yeni Sayfa" butonuna tıklayın.
+                            </p>
+                            <Button onClick={() => setIsCreateDialogOpen(true)}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                İlk Sayfayı Oluştur
+                            </Button>
+                        </div>
+                    ) : (
+                        <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <SortableContext
+                                items={hierarchicalPages.map(p => p.id)}
+                                strategy={verticalListSortingStrategy}
                             >
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Başlık</TableHead>
+                                            <TableHead>Sayfa</TableHead>
                                             <TableHead>Slug</TableHead>
+                                            <TableHead>Dil</TableHead>
                                             <TableHead>Üst Sayfa</TableHead>
                                             <TableHead>Sıra</TableHead>
                                             <TableHead>Durum</TableHead>
-                                            <TableHead>Modüller</TableHead>
+                                            <TableHead>İçerik</TableHead>
                                             <TableHead className="text-right">İşlemler</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        <SortableContext
-                                            items={hierarchicalPages.map(p => p.id)}
-                                            strategy={verticalListSortingStrategy}
-                                        >
-                                            {hierarchicalPages.length === 0 ? (
-                                                <TableRow>
-                                                    <TableCell colSpan={7} className="text-center py-8">
-                                                        <div className="text-muted-foreground">
-                                                            Henüz sayfa oluşturulmamış
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ) : (
-                                                hierarchicalPages.map((page) => (
-                                                    <SortableTableRow
-                                                        key={page.id}
-                                                        page={page}
-                                                        onToggleStatus={togglePageStatus}
-                                                        onEdit={(id) => window.location.href = `/admin/pages/${id}/edit`}
-                                                        onDelete={deletePage}
-                                                        onToggleExpanded={toggleExpanded}
-                                                        expandedPages={expandedPages}
-                                                        renderPageTitle={renderPageTitle}
-                                                    />
-                                                ))
-                                            )}
-                                        </SortableContext>
+                                        {hierarchicalPages.map((page) => (
+                                            <SortableTableRow
+                                                key={page.id}
+                                                page={page}
+                                                onToggleStatus={togglePageStatus}
+                                                onEdit={handleEdit}
+                                                onDelete={deletePage}
+                                                renderPageTitle={renderPageTitle}
+                                            />
+                                        ))}
                                     </TableBody>
                                 </Table>
-                            </DndContext>
-                        ) : (
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Başlık</TableHead>
-                                        <TableHead>Slug</TableHead>
-                                        <TableHead>Üst Sayfa</TableHead>
-                                        <TableHead>Sıra</TableHead>
-                                        <TableHead>Durum</TableHead>
-                                        <TableHead>Modüller</TableHead>
-                                        <TableHead className="text-right">İşlemler</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {filteredPages.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={7} className="text-center py-8">
-                                                <div className="text-muted-foreground">
-                                                    Arama kriterine uygun sayfa bulunamadı
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        filteredPages.map((page) => (
-                                            <TableRow key={page.id}>
-                                                <TableCell>
-                                                    {renderPageTitle(page)}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <code className="text-sm bg-muted px-1 py-0.5 rounded">
-                                                        /{page.slug}
-                                                    </code>
-                                                </TableCell>
-                                                <TableCell>
-                                                    {page.parent ? (
-                                                        <Badge variant="outline">
-                                                            {page.parent.title}
-                                                        </Badge>
-                                                    ) : (
-                                                        <span className="text-muted-foreground text-sm">Ana seviye</span>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant="secondary">
-                                                        {page.order}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant={page.isActive ? "default" : "secondary"}>
-                                                        {page.isActive ? "Aktif" : "Pasif"}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline">
-                                                        {page.modules.length} modül
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <div className="flex items-center justify-end space-x-2">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => togglePageStatus(page.id, page.isActive)}
-                                                        >
-                                                            {page.isActive ? (
-                                                                <EyeOff className="h-4 w-4" />
-                                                            ) : (
-                                                                <Eye className="h-4 w-4" />
-                                                            )}
-                                                        </Button>
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                                window.location.href = `/admin/pages/${page.id}/edit`
-                                                            }}
-                                                        >
-                                                            <Edit className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => deletePage(page.id)}
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        )}
-                    </div>
+                            </SortableContext>
+                        </DndContext>
+                    )}
                 </CardContent>
             </Card>
 
@@ -738,7 +628,9 @@ export default function PagesManagement() {
             <CreatePageDialog
                 open={isCreateDialogOpen}
                 onOpenChange={setIsCreateDialogOpen}
-                onPageCreated={fetchPages}
+                onPageCreated={handlePageCreated}
+                languages={languages}
+                pages={pages}
             />
         </div>
     )

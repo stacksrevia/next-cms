@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -13,7 +13,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
 import {
     Select,
     SelectContent,
@@ -22,58 +21,56 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
+import { Loader2, Info } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
-interface Page {
+interface GlobalPage {
     id: string
-    title: string
     slug: string
+    title: string
+    parentId?: string | null
+}
+
+interface Language {
+    id: string
+    code: string
+    name: string
+    flag: string
+    isDefault: boolean
+    isActive: boolean
 }
 
 interface CreatePageDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onPageCreated: () => void
+    languages: Language[]
+    pages: GlobalPage[]
 }
 
-export function CreatePageDialog({ open, onOpenChange, onPageCreated }: CreatePageDialogProps) {
+export function CreatePageDialog({
+    open,
+    onOpenChange,
+    onPageCreated,
+    languages,
+    pages
+}: CreatePageDialogProps) {
     const [loading, setLoading] = useState(false)
-    const [pages, setPages] = useState<Page[]>([])
     const [formData, setFormData] = useState({
         title: "",
         description: "",
         slug: "",
         seoTitle: "",
         seoDescription: "",
-        parentId: "",
-        isActive: true
+        parentId: ""
     })
-
-    // Mevcut sayfaları yükle
-    useEffect(() => {
-        if (open) {
-            fetchPages()
-        }
-    }, [open])
-
-    const fetchPages = async () => {
-        try {
-            const response = await fetch("/api/pages")
-            if (response.ok) {
-                const data = await response.json()
-                setPages(data.pages || [])
-            }
-        } catch (error) {
-            console.error("Error fetching pages:", error)
-        }
-    }
 
     const generateSlug = (title: string) => {
         return title
             .toLowerCase()
-            .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-            .replace(/\s+/g, '-') // Replace spaces with hyphens
-            .replace(/-+/g, '-') // Replace multiple hyphens with single
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
             .trim()
     }
 
@@ -82,7 +79,7 @@ export function CreatePageDialog({ open, onOpenChange, onPageCreated }: CreatePa
             ...prev,
             title,
             slug: generateSlug(title),
-            seoTitle: title // Auto-fill SEO title
+            seoTitle: title // SEO başlığını otomatik doldur
         }))
     }
 
@@ -99,16 +96,34 @@ export function CreatePageDialog({ open, onOpenChange, onPageCreated }: CreatePa
             return
         }
 
+        if (languages.length === 0) {
+            toast.error("En az bir dil tanımlanmalıdır")
+            return
+        }
+
         setLoading(true)
 
         try {
+            // Tüm aktif diller için içerik oluştur
+            const contents = languages
+                .filter(lang => lang.isActive)
+                .map(language => ({
+                    languageId: language.id,
+                    title: formData.title, // Başlangıçta aynı başlık, sonra her dilde ayrı düzenlenebilir
+                    description: formData.description,
+                    slug: formData.slug, // Başlangıçta aynı slug, sonra her dilde ayrı düzenlenebilir
+                    seoTitle: formData.seoTitle || formData.title,
+                    seoDescription: formData.seoDescription || formData.description
+                }))
+
             const submitData = {
-                ...formData,
-                parentId: formData.parentId || null
-                // order otomatik olarak API'de hesaplanacak
+                slug: formData.slug,
+                parentId: formData.parentId === "none" || !formData.parentId ? null : formData.parentId,
+                createForAllLanguages: true, // Tüm diller için oluştur
+                contents: contents
             }
 
-            const response = await fetch("/api/pages", {
+            const response = await fetch("/api/admin/pages", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -117,7 +132,8 @@ export function CreatePageDialog({ open, onOpenChange, onPageCreated }: CreatePa
             })
 
             if (response.ok) {
-                toast.success("Sayfa başarıyla oluşturuldu")
+                const result = await response.json()
+                toast.success(`Sayfa ${contents.length} dilde başarıyla oluşturuldu`)
                 onPageCreated()
                 onOpenChange(false)
                 // Reset form
@@ -127,19 +143,23 @@ export function CreatePageDialog({ open, onOpenChange, onPageCreated }: CreatePa
                     slug: "",
                     seoTitle: "",
                     seoDescription: "",
-                    parentId: "",
-                    isActive: true
+                    parentId: ""
                 })
             } else {
                 const error = await response.json()
                 toast.error(error.error || "Sayfa oluşturulurken hata oluştu")
             }
         } catch (error) {
+            console.error("Error creating page:", error)
             toast.error("Sayfa oluşturulurken hata oluştu")
         } finally {
             setLoading(false)
         }
     }
+
+    // Ana seviye sayfaları filtrele
+    const parentPages = pages.filter(page => !page.parentId)
+    const activeLanguages = languages.filter(lang => lang.isActive)
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -147,146 +167,131 @@ export function CreatePageDialog({ open, onOpenChange, onPageCreated }: CreatePa
                 <DialogHeader>
                     <DialogTitle>Yeni Sayfa Oluştur</DialogTitle>
                     <DialogDescription>
-                        Yeni bir sayfa oluşturun. Daha sonra modüller ekleyebilirsiniz.
+                        Sayfa tüm aktif dillerde otomatik olarak oluşturulacak
                     </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid gap-4">
-                        {/* Title */}
-                        <div className="space-y-2">
-                            <Label htmlFor="title">Sayfa Başlığı *</Label>
-                            <Input
-                                id="title"
-                                value={formData.title}
-                                onChange={(e) => handleTitleChange(e.target.value)}
-                                placeholder="Örn: Hakkımızda"
-                                disabled={loading}
-                                required
-                            />
-                        </div>
+                {/* Bilgi mesajı */}
+                <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                        Bu sayfa <strong>{activeLanguages.length} dilde</strong> oluşturulacak: {activeLanguages.map(lang => lang.name).join(', ')}.
+                        Her dil için ayrı içerik düzenleyebilirsiniz.
+                    </AlertDescription>
+                </Alert>
 
-                        {/* Description */}
-                        <div className="space-y-2">
-                            <Label htmlFor="description">Sayfa Açıklaması</Label>
-                            <Textarea
-                                id="description"
-                                value={formData.description}
-                                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                                placeholder="Sayfa hakkında kısa açıklama..."
-                                disabled={loading}
-                                rows={3}
-                            />
-                        </div>
-
-                        {/* Parent Page */}
-                        <div className="space-y-2">
-                            <Label htmlFor="parentId">Üst Sayfa</Label>
-                            <Select
-                                value={formData.parentId || "none"}
-                                onValueChange={(value) => setFormData(prev => ({ ...prev, parentId: value === "none" ? "" : value }))}
-                                disabled={loading}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Üst sayfa seçin (isteğe bağlı)" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none">Ana Sayfa (Üst seviye)</SelectItem>
-                                    {pages.map((page) => (
-                                        <SelectItem key={page.id} value={page.id}>
-                                            {page.title}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <p className="text-xs text-muted-foreground">
-                                Bu sayfa başka bir sayfanın alt sayfası olacaksa üst sayfayı seçin
-                            </p>
-                        </div>
-
-                        {/* Slug */}
-                        <div className="space-y-2">
-                            <Label htmlFor="slug">URL Slug *</Label>
-                            <div className="flex items-center space-x-2">
-                                <span className="text-sm text-muted-foreground">/</span>
-                                <Input
-                                    id="slug"
-                                    value={formData.slug}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                                    placeholder="hakkimizda"
-                                    disabled={loading}
-                                    required
-                                />
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                URL'de görünecek isim. Sadece küçük harf, rakam ve tire kullanın.
-                            </p>
-                        </div>
-
-                        {/* SEO Title */}
-                        <div className="space-y-2">
-                            <Label htmlFor="seoTitle">SEO Başlığı</Label>
-                            <Input
-                                id="seoTitle"
-                                value={formData.seoTitle}
-                                onChange={(e) => setFormData(prev => ({ ...prev, seoTitle: e.target.value }))}
-                                placeholder="Arama motorları için başlık"
-                                disabled={loading}
-                            />
-                            <p className="text-xs text-muted-foreground">
-                                Arama motorlarında görünecek başlık (60 karakter önerilir)
-                            </p>
-                        </div>
-
-                        {/* SEO Description */}
-                        <div className="space-y-2">
-                            <Label htmlFor="seoDescription">SEO Açıklaması</Label>
-                            <Textarea
-                                id="seoDescription"
-                                value={formData.seoDescription}
-                                onChange={(e) => setFormData(prev => ({ ...prev, seoDescription: e.target.value }))}
-                                placeholder="Arama motorları için açıklama"
-                                disabled={loading}
-                                rows={2}
-                            />
-                            <p className="text-xs text-muted-foreground">
-                                Arama motorlarında görünecek açıklama (160 karakter önerilir)
-                            </p>
-                        </div>
-
-                        {/* Active Status */}
-                        <div className="flex items-center space-x-2">
-                            <Switch
-                                id="isActive"
-                                checked={formData.isActive}
-                                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
-                                disabled={loading}
-                            />
-                            <Label htmlFor="isActive">Sayfa aktif</Label>
-                        </div>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Sayfa Başlığı */}
+                    <div className="space-y-2">
+                        <Label htmlFor="title">Sayfa Başlığı *</Label>
+                        <Input
+                            id="title"
+                            value={formData.title}
+                            onChange={(e) => handleTitleChange(e.target.value)}
+                            placeholder="Örn: Hakkımızda"
+                            required
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Bu başlık tüm dillerde başlangıç olarak kullanılacak
+                        </p>
                     </div>
 
-                    <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => onOpenChange(false)}
-                            disabled={loading}
+                    {/* Slug */}
+                    <div className="space-y-2">
+                        <Label htmlFor="slug">URL Slug *</Label>
+                        <Input
+                            id="slug"
+                            value={formData.slug}
+                            onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
+                            placeholder="Örn: hakkimizda"
+                            required
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Slug tüm dillerde aynı olacak (örn: /tr/hakkimizda, /en/hakkimizda)
+                        </p>
+                    </div>
+
+                    {/* Açıklama */}
+                    <div className="space-y-2">
+                        <Label htmlFor="description">Açıklama</Label>
+                        <Textarea
+                            id="description"
+                            value={formData.description}
+                            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                            placeholder="Sayfa hakkında kısa açıklama"
+                            rows={3}
+                        />
+                    </div>
+
+                    {/* SEO Başlığı */}
+                    <div className="space-y-2">
+                        <Label htmlFor="seoTitle">SEO Başlığı</Label>
+                        <Input
+                            id="seoTitle"
+                            value={formData.seoTitle}
+                            onChange={(e) => setFormData(prev => ({ ...prev, seoTitle: e.target.value }))}
+                            placeholder="Arama motorları için başlık"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Boş bırakılırsa sayfa başlığı kullanılır
+                        </p>
+                    </div>
+
+                    {/* SEO Açıklaması */}
+                    <div className="space-y-2">
+                        <Label htmlFor="seoDescription">SEO Açıklaması</Label>
+                        <Textarea
+                            id="seoDescription"
+                            value={formData.seoDescription}
+                            onChange={(e) => setFormData(prev => ({ ...prev, seoDescription: e.target.value }))}
+                            placeholder="Arama motorları için açıklama"
+                            rows={2}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Boş bırakılırsa sayfa açıklaması kullanılır
+                        </p>
+                    </div>
+
+                    {/* Üst Sayfa */}
+                    <div className="space-y-2">
+                        <Label htmlFor="parentId">Üst Sayfa (İsteğe bağlı)</Label>
+                        <Select
+                            value={formData.parentId}
+                            onValueChange={(value) => setFormData(prev => ({ ...prev, parentId: value }))}
                         >
-                            İptal
-                        </Button>
-                        <Button type="submit" disabled={loading}>
-                            {loading ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Oluşturuluyor...
-                                </>
-                            ) : (
-                                "Sayfa Oluştur"
-                            )}
-                        </Button>
-                    </DialogFooter>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Ana seviye sayfa" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">Ana seviye sayfa</SelectItem>
+                                {parentPages.map((page) => (
+                                    <SelectItem key={page.id} value={page.id}>
+                                        {page.title}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </form>
+
+                <DialogFooter>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => onOpenChange(false)}
+                        disabled={loading}
+                    >
+                        İptal
+                    </Button>
+                    <Button
+                        type="submit"
+                        onClick={handleSubmit}
+                        disabled={loading}
+                    >
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {loading ? "Oluşturuluyor..." : `${activeLanguages.length} Dilde Oluştur`}
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     )

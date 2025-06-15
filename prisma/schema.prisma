@@ -68,50 +68,105 @@ enum Role {
   ADMIN
 }
 
-// CMS Models
+// Language Model
+model Language {
+  id        String   @id @default(cuid())
+  code      String   @unique // tr, en, de, fr, etc.
+  name      String // Türkçe, English, Deutsch, Français
+  flag      String // Country code for flag (TR, US, DE, FR)
+  isDefault Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  pageContents PageContent[]
+  pageModules  PageModule[]
+
+  @@map("languages")
+}
+
+// Global Page - Sayfa yapısı ve hiyerarşi
+model GlobalPage {
+  id         String   @id @default(cuid())
+  slug       String   @unique
+  parentId   String?
+  order      Int      @default(0)
+  isActive   Boolean  @default(true)
+  isHomePage Boolean  @default(false) // Ana sayfa işaretleyicisi
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  parent   GlobalPage?   @relation("GlobalPageHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children GlobalPage[]  @relation("GlobalPageHierarchy")
+  contents PageContent[]
+
+  @@index([parentId, order])
+}
+
+// Page Content - Dil bazında içerik
+model PageContent {
+  id             String   @id @default(cuid())
+  globalPageId   String
+  languageId     String
+  title          String
+  description    String?
+  slug           String // Dile özel slug
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  globalPage GlobalPage   @relation(fields: [globalPageId], references: [id], onDelete: Cascade)
+  language   Language     @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  modules    PageModule[]
+
+  @@unique([globalPageId, languageId])
+  @@unique([slug, languageId]) // Dil bazında unique slug
+  @@index([globalPageId])
+  @@index([languageId])
+  @@index([slug])
+}
+
+// Page Module - Dil bazında modüller
+model PageModule {
+  id            String   @id @default(cuid())
+  pageContentId String
+  languageId    String
+  type          String
+  content       Json
+  order         Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  pageContent PageContent @relation(fields: [pageContentId], references: [id], onDelete: Cascade)
+  language    Language    @relation(fields: [languageId], references: [id], onDelete: Cascade)
+
+  @@index([pageContentId, order])
+  @@index([languageId])
+}
+
+// Eski Page modeli - Migration için geçici olarak tutuyoruz
 model Page {
   id             String   @id @default(cuid())
   title          String
   description    String?
-  slug           String   @unique
+  slug           String
   seoTitle       String?
   seoDescription String?
   parentId       String?
+  languageId     String
   order          Int      @default(0)
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  // Relations
-  parent   Page?        @relation("PageHierarchy", fields: [parentId], references: [id])
-  children Page[]       @relation("PageHierarchy")
-  modules  PageModule[]
-
-  @@map("pages")
-}
-
-model PageModule {
-  id        String     @id @default(cuid())
-  pageId    String
-  type      ModuleType
-  order     Int
-  content   Json
-  isActive  Boolean    @default(true)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-
-  // Relations
-  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
-
-  @@map("page_modules")
-}
-
-enum ModuleType {
-  TEXT_IMAGE
-  PARALLAX
-  HERO
-  GALLERY
-  VIDEO
-  CONTACT_FORM
-  TESTIMONIALS
+  @@unique([slug, languageId])
+  @@index([languageId])
+  @@index([parentId])
+  @@map("page_old")
 }

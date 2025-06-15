@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,9 +22,55 @@ import {
     Mail,
     Star,
     Mountain,
-    Grid3X3
+    Grid3X3,
+    Trash2,
+    GripVertical
 } from "lucide-react"
 import { toast } from "sonner"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from '@dnd-kit/core'
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import {
+    useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import ReactCountryFlag from "react-country-flag"
+
+interface Module {
+    id: string
+    type: string
+    content: Record<string, unknown>
+    order: number
+    isActive: boolean
+}
+
+interface Language {
+    id: string
+    code: string
+    name: string
+    flag: string
+    isDefault: boolean
+    isActive: boolean
+}
 
 interface Page {
     id: string
@@ -33,18 +79,19 @@ interface Page {
     slug: string
     seoTitle?: string
     seoDescription?: string
+    parentId?: string | null
+    languageId: string
+    order: number
     isActive: boolean
     createdAt: string
     updatedAt: string
-    modules: PageModule[]
-}
-
-interface PageModule {
-    id: string
-    type: string
-    order: number
-    content: any
-    isActive: boolean
+    language: Language
+    parent?: {
+        id: string
+        title: string
+        slug: string
+    }
+    modules: Module[]
 }
 
 const moduleTypes = [
@@ -103,6 +150,8 @@ export default function PageEditor() {
     const params = useParams()
     const router = useRouter()
     const [page, setPage] = useState<Page | null>(null)
+    const [languages, setLanguages] = useState<Language[]>([])
+    const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [formData, setFormData] = useState({
@@ -114,9 +163,33 @@ export default function PageEditor() {
         isActive: true
     })
 
+    // Dilleri getir
+    const fetchLanguages = async () => {
+        try {
+            const response = await fetch("/api/admin/languages")
+            if (response.ok) {
+                const data = await response.json()
+                setLanguages(data.languages || [])
+
+                // Varsayılan dili seç
+                if (!selectedLanguage && data.languages && data.languages.length > 0) {
+                    const defaultLang = data.languages.find((lang: Language) => lang.isDefault) || data.languages[0]
+                    setSelectedLanguage(defaultLang)
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching languages:', error)
+        }
+    }
+
     const fetchPage = async () => {
         try {
-            const response = await fetch(`/api/pages/${params.id}`)
+            const queryParams = new URLSearchParams()
+            if (selectedLanguage) {
+                queryParams.append('languageId', selectedLanguage.id)
+            }
+
+            const response = await fetch(`/api/admin/pages/${params.id}?${queryParams}`)
             if (response.ok) {
                 const data = await response.json()
                 setPage(data)
@@ -141,20 +214,32 @@ export default function PageEditor() {
     }
 
     useEffect(() => {
-        if (params.id) {
+        fetchLanguages()
+    }, [])
+
+    useEffect(() => {
+        if (params.id && selectedLanguage) {
             fetchPage()
         }
-    }, [params.id])
+    }, [params.id, selectedLanguage])
+
+    const handleLanguageChange = (language: Language) => {
+        setSelectedLanguage(language)
+        setLoading(true)
+    }
 
     const handleSave = async () => {
         setSaving(true)
         try {
-            const response = await fetch(`/api/pages/${params.id}`, {
+            const response = await fetch(`/api/admin/pages/${params.id}`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({
+                    ...formData,
+                    languageId: selectedLanguage?.id
+                }),
             })
 
             if (response.ok) {
@@ -173,7 +258,7 @@ export default function PageEditor() {
 
     const addModule = async (moduleType: string) => {
         try {
-            const response = await fetch(`/api/pages/${params.id}/modules`, {
+            const response = await fetch(`/api/admin/pages/${params.id}/modules`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -181,7 +266,8 @@ export default function PageEditor() {
                 body: JSON.stringify({
                     type: moduleType,
                     order: page?.modules.length || 0,
-                    content: getDefaultModuleContent(moduleType)
+                    content: getDefaultModuleContent(moduleType),
+                    languageId: selectedLanguage?.id
                 }),
             })
 
@@ -265,6 +351,49 @@ export default function PageEditor() {
 
                     <div className="flex-1 px-4">
                         <h1 className="text-lg font-semibold">{page.title} - Düzenle</h1>
+                        {selectedLanguage && (
+                            <p className="text-sm text-muted-foreground">
+                                {selectedLanguage.name} dilinde düzenleniyor
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Dil Seçici */}
+                    <div className="flex items-center space-x-2 mr-4">
+                        <Label htmlFor="language-select" className="text-sm font-medium">
+                            Dil:
+                        </Label>
+                        <Select
+                            value={selectedLanguage?.id || ""}
+                            onValueChange={(value) => {
+                                const language = languages.find(lang => lang.id === value)
+                                if (language) handleLanguageChange(language)
+                            }}
+                        >
+                            <SelectTrigger className="w-[150px]">
+                                <SelectValue placeholder="Dil seçin" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {languages.filter(lang => lang.isActive).map((language) => (
+                                    <SelectItem key={language.id} value={language.id}>
+                                        <div className="flex items-center gap-2">
+                                            <ReactCountryFlag
+                                                countryCode={language.flag}
+                                                svg
+                                                style={{
+                                                    width: '1em',
+                                                    height: '1em',
+                                                }}
+                                            />
+                                            <span>{language.name}</span>
+                                            {language.isDefault && (
+                                                <span className="text-xs text-muted-foreground">(Varsayılan)</span>
+                                            )}
+                                        </div>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <div className="flex items-center space-x-2">

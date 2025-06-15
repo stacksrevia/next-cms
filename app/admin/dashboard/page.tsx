@@ -19,21 +19,9 @@ import {
     AlertTriangle,
     Plus
 } from "lucide-react"
+import ReactCountryFlag from "react-country-flag"
 
-async function checkHomePage() {
-    try {
-        const homePage = await prisma.page.findFirst({
-            where: {
-                slug: "anasayfa",
-                isActive: true
-            }
-        })
-        return !!homePage
-    } catch (error) {
-        console.error("Error checking home page:", error)
-        return false
-    }
-}
+
 
 export default async function AdminDashboard() {
     const session = await getServerSession(authOptions)
@@ -45,8 +33,6 @@ export default async function AdminDashboard() {
     if (session.user.role !== "ADMIN") {
         redirect("/")
     }
-
-    const hasHomePage = await checkHomePage()
 
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -64,27 +50,6 @@ export default async function AdminDashboard() {
                     </Badge>
                 </div>
             </div>
-
-            {/* Homepage Warning */}
-            {!hasHomePage && (
-                <Alert className="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20">
-                    <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-                    <AlertTitle className="text-yellow-800 dark:text-yellow-200">
-                        Anasayfa Bulunamadı
-                    </AlertTitle>
-                    <AlertDescription className="text-yellow-700 dark:text-yellow-300">
-                        Web sitenizin anasayfası henüz oluşturulmamış. Ziyaretçiler anasayfaya gittiğinde uyarı mesajı görecekler.
-                        <div className="mt-3">
-                            <Button asChild size="sm" className="bg-yellow-600 hover:bg-yellow-700 text-white">
-                                <Link href="/admin/pages">
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Anasayfa Oluştur
-                                </Link>
-                            </Button>
-                        </div>
-                    </AlertDescription>
-                </Alert>
-            )}
 
             {/* Stats Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -183,7 +148,7 @@ export default async function AdminDashboard() {
                             <div className="flex-1 space-y-1">
                                 <p className="text-sm font-medium">İçerik güncellendi</p>
                                 <p className="text-xs text-muted-foreground">
-                                    "Yeni Özellikler" sayfası düzenlendi
+                                    &quot;Yeni Özellikler&quot; sayfası düzenlendi
                                 </p>
                             </div>
                             <div className="flex items-center text-xs text-muted-foreground">

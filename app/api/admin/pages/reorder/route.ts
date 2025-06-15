@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
+import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
+// POST - Sayfa sıralamasını güncelle (Admin)
 export async function POST(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions)
@@ -18,29 +19,28 @@ export async function POST(request: NextRequest) {
 
         if (!Array.isArray(pageOrders)) {
             return NextResponse.json(
-                { error: "Geçersiz veri formatı" },
+                { error: 'pageOrders array gereklidir' },
                 { status: 400 }
             )
         }
 
-        // Transaction ile tüm sayfa sıralarını güncelle
-        await prisma.$transaction(
-            pageOrders.map(({ id, order, parentId }) =>
-                prisma.page.update({
-                    where: { id },
-                    data: {
-                        order,
-                        parentId: parentId || null
-                    }
+        // Transaction ile tüm güncellemeleri yap
+        await prisma.$transaction(async (tx) => {
+            for (const pageOrder of pageOrders) {
+                await tx.globalPage.update({
+                    where: { id: pageOrder.id },
+                    data: { order: pageOrder.order }
                 })
-            )
-        )
+            }
+        })
 
-        return NextResponse.json({ success: true })
+        return NextResponse.json({
+            message: 'Sayfa sıralaması başarıyla güncellendi'
+        })
     } catch (error) {
-        console.error("Sayfa sıralama hatası:", error)
+        console.error('Error reordering pages:', error)
         return NextResponse.json(
-            { error: "Sayfa sıralama güncellenirken hata oluştu" },
+            { error: 'Sayfa sıralaması güncellenirken hata oluştu' },
             { status: 500 }
         )
     }

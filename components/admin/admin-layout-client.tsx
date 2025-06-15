@@ -69,13 +69,17 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
     console.log("Showing sidebar layout")
     return (
         <SidebarProvider>
-            <AdminSidebar />
-            <main className="flex-1">
-                <div className="flex items-center border-b px-4 py-2">
-                    <SidebarTrigger />
-                </div>
-                {children}
-            </main>
+            <div className="min-h-screen flex w-full">
+                <AdminSidebar />
+                <main className="flex-1 flex flex-col overflow-hidden">
+                    <div className="flex items-center border-b px-4 py-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                        <SidebarTrigger />
+                    </div>
+                    <div className="flex-1 overflow-auto">
+                        {children}
+                    </div>
+                </main>
+            </div>
         </SidebarProvider>
     )
 } 

@@ -19,7 +19,7 @@ export default function NotFound() {
                     </CardHeader>
                     <CardContent className="text-center space-y-4">
                         <p className="text-muted-foreground">
-                            Lütfen URL'yi kontrol edin veya anasayfaya dönün.
+                            Lütfen URL&apos;yi kontrol edin veya anasayfaya dönün.
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-3 justify-center">

@@ -39,8 +39,13 @@ const menuItems = [
     },
     {
         title: "Sayfa Yönetimi",
-        icon: Globe,
+        icon: FileText,
         href: "/admin/pages",
+    },
+    {
+        title: "Dil Yönetimi",
+        icon: Globe,
+        href: "/admin/languages",
     },
     {
         title: "Kullanıcılar",

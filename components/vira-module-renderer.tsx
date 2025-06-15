@@ -313,7 +313,7 @@ function ViraVideoModule({ content }: { content: any }) {
                             height: '100%',
                             color: 'white'
                         }}>
-                            <p>Video URL'si belirtilmemiş</p>
+                            <p className="text-muted-foreground">Video URL&apos;si eklenmemiş</p>
                         </div>
                     )}
                 </div>
@@ -490,7 +490,7 @@ function ViraTestimonialsModule({ content }: { content: any }) {
                                     marginBottom: '1.5rem',
                                     fontStyle: 'italic'
                                 }}>
-                                    "{testimonial.text}"
+                                    &quot;{testimonial.text}&quot;
                                 </p>
                                 <div>
                                     <p style={{

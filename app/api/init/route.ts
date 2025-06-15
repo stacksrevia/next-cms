@@ -9,7 +9,7 @@ export async function GET() {
             return NextResponse.json({
                 initialized: true,
                 message: result.message,
-                user: result.user || null
+                user: 'user' in result ? result.user || null : null
             })
         } else {
             return NextResponse.json({
