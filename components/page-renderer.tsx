@@ -1,4 +1,7 @@
 import { ViraModuleRenderer } from "./vira-module-renderer"
+import { ViraNavbar } from "./vira-navbar"
+import { ViraFooter } from "./vira-footer"
+import { prisma } from "@/lib/prisma"
 import styles from "@/styles/page-renderer.module.css"
 
 interface Page {
@@ -26,9 +29,34 @@ interface PageRendererProps {
     page: Page
 }
 
-export function PageRenderer({ page }: PageRendererProps) {
+async function getNavPages() {
+    try {
+        const pages = await prisma.page.findMany({
+            where: { isActive: true },
+            select: {
+                id: true,
+                title: true,
+                slug: true,
+                parentId: true,
+                order: true
+            },
+            orderBy: { order: 'asc' }
+        })
+        return pages
+    } catch (error) {
+        console.error("Error fetching nav pages:", error)
+        return []
+    }
+}
+
+export async function PageRenderer({ page }: PageRendererProps) {
+    const navPages = await getNavPages()
+
     return (
         <div className={styles.viraPage}>
+            {/* Navigation */}
+            <ViraNavbar pages={navPages} />
+
             {/* Page Header - Optional, can be hidden if first module is HERO */}
             {page.modules.length === 0 || page.modules[0]?.type !== "HERO" ? (
                 <div className={styles.viraPageHeader}>
@@ -58,6 +86,9 @@ export function PageRenderer({ page }: PageRendererProps) {
                     ))
                 )}
             </div>
+
+            {/* Footer */}
+            <ViraFooter />
         </div>
     )
 } 

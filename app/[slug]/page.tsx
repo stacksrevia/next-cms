@@ -22,7 +22,18 @@ async function getPage(slug: string) {
                 }
             }
         })
-        return page
+
+        if (!page) return null
+
+        // Type uyumluluğu için null değerleri undefined'a çevir
+        return {
+            ...page,
+            description: page.description || undefined,
+            seoTitle: page.seoTitle || undefined,
+            seoDescription: page.seoDescription || undefined,
+            createdAt: page.createdAt.toISOString(),
+            updatedAt: page.updatedAt.toISOString(),
+        }
     } catch (error) {
         console.error("Error fetching page:", error)
         return null
@@ -59,7 +70,16 @@ export default async function DynamicPage({ params }: PageProps) {
 export async function generateStaticParams() {
     try {
         const pages = await prisma.page.findMany({
-            where: { isActive: true },
+            where: {
+                isActive: true,
+                // Order 0 olan ana seviye sayfayı hariç tut (o zaten "/" olarak çalışıyor)
+                NOT: {
+                    AND: [
+                        { parentId: null },
+                        { order: 0 }
+                    ]
+                }
+            },
             select: { slug: true }
         })
 

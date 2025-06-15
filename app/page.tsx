@@ -7,9 +7,11 @@ import Link from "next/link"
 
 async function getHomePage() {
   try {
+    // Ana seviyede order'ı 0 olan aktif sayfayı bul
     const homePage = await prisma.page.findFirst({
       where: {
-        slug: "anasayfa",
+        parentId: null, // Ana seviye sayfa
+        order: 0,       // Order'ı 0 olan
         isActive: true
       },
       include: {
@@ -19,7 +21,18 @@ async function getHomePage() {
         }
       }
     })
-    return homePage
+
+    if (!homePage) return null
+
+    // Type uyumluluğu için null değerleri undefined'a çevir
+    return {
+      ...homePage,
+      description: homePage.description || undefined,
+      seoTitle: homePage.seoTitle || undefined,
+      seoDescription: homePage.seoDescription || undefined,
+      createdAt: homePage.createdAt.toISOString(),
+      updatedAt: homePage.updatedAt.toISOString(),
+    }
   } catch (error) {
     console.error("Error fetching home page:", error)
     return null
@@ -56,7 +69,7 @@ export default async function Home() {
               </div>
               <CardTitle className="text-2xl">Anasayfa Bulunamadı</CardTitle>
               <CardDescription className="text-lg">
-                Henüz bir anasayfa oluşturulmamış. Lütfen admin panelinden "anasayfa" slug'ı ile bir sayfa oluşturun.
+                Henüz bir anasayfa oluşturulmamış. Lütfen admin panelinden ana seviyede order'ı 0 olan bir sayfa oluşturun.
               </CardDescription>
             </CardHeader>
           </Card>

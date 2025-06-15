@@ -1,0 +1,309 @@
+.viraFooter {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    color: #f9fafb;
+    margin-top: auto;
+}
+
+.viraFooterMain {
+    padding: 4rem 0 2rem;
+}
+
+.viraFooterContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+.viraFooterGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 3rem;
+}
+
+.viraFooterSection {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Logo Section */
+.viraFooterLogo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.viraFooterLogoIcon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.viraFooterLogoSymbol {
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.viraFooterLogoText {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #f9fafb;
+    letter-spacing: -0.025em;
+}
+
+.viraFooterDescription {
+    color: #d1d5db;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Social Links */
+.viraFooterSocial {
+    display: flex;
+    gap: 1rem;
+}
+
+.viraFooterSocialLink {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #d1d5db;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.viraFooterSocialLink:hover {
+    background-color: rgba(102, 126, 234, 0.2);
+    color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Section Titles */
+.viraFooterTitle {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #f9fafb;
+    margin: 0 0 1rem 0;
+    position: relative;
+}
+
+.viraFooterTitle::after {
+    content: '';
+    position: absolute;
+    bottom: -0.5rem;
+    left: 0;
+    width: 30px;
+    height: 2px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 1px;
+}
+
+/* Lists */
+.viraFooterList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.viraFooterLink {
+    color: #d1d5db;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    position: relative;
+    padding-left: 0;
+}
+
+.viraFooterLink:hover {
+    color: #667eea;
+    padding-left: 0.5rem;
+}
+
+.viraFooterLink::before {
+    content: '';
+    position: absolute;
+    left: -0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 1px;
+    background-color: #667eea;
+    transition: width 0.2s ease;
+}
+
+.viraFooterLink:hover::before {
+    width: 0.25rem;
+}
+
+/* Contact Section */
+.viraFooterContact {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.viraFooterContactItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    color: #d1d5db;
+}
+
+.viraFooterContactItem svg {
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+    color: #667eea;
+}
+
+.viraFooterContactLink {
+    color: #d1d5db;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.viraFooterContactLink:hover {
+    color: #667eea;
+}
+
+/* Footer Bottom */
+.viraFooterBottom {
+    border-top: 1px solid rgba(55, 65, 81, 0.5);
+    padding: 1.5rem 0;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.viraFooterBottomContent {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.viraFooterCopyright p {
+    margin: 0;
+    color: #9ca3af;
+    font-size: 0.875rem;
+}
+
+.viraFooterLegal {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.viraFooterLegalLink {
+    color: #9ca3af;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 0.2s ease;
+}
+
+.viraFooterLegalLink:hover {
+    color: #667eea;
+}
+
+.viraFooterMadeWith {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #9ca3af;
+    font-size: 0.875rem;
+}
+
+.viraFooterHeart {
+    color: #ef4444;
+    animation: heartbeat 2s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+
+    0%,
+    50%,
+    100% {
+        transform: scale(1);
+    }
+
+    25%,
+    75% {
+        transform: scale(1.1);
+    }
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+    .viraFooterContainer {
+        padding: 0 1rem;
+    }
+
+    .viraFooterMain {
+        padding: 3rem 0 1.5rem;
+    }
+
+    .viraFooterGrid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .viraFooterBottomContent {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+
+    .viraFooterLegal {
+        justify-content: center;
+    }
+
+    .viraFooterSocial {
+        justify-content: center;
+    }
+}
+
+/* Tablet Styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .viraFooterContainer {
+        padding: 0 1.25rem;
+    }
+
+    .viraFooterGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2.5rem;
+    }
+}
+
+/* Large Desktop Styles */
+@media (min-width: 1025px) {
+    .viraFooterContainer {
+        padding: 0 2rem;
+    }
+
+    .viraFooterMain {
+        padding: 5rem 0 3rem;
+    }
+
+    .viraFooterGrid {
+        gap: 4rem;
+    }
+}
+
+/* Dark mode adjustments (already dark by default) */
+@media (prefers-color-scheme: light) {
+    /* Keep footer dark even in light mode for contrast */
+}

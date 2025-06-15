@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -14,8 +14,21 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
+
+interface Page {
+    id: string
+    title: string
+    slug: string
+}
 
 interface CreatePageDialogProps {
     open: boolean
@@ -25,14 +38,35 @@ interface CreatePageDialogProps {
 
 export function CreatePageDialog({ open, onOpenChange, onPageCreated }: CreatePageDialogProps) {
     const [loading, setLoading] = useState(false)
+    const [pages, setPages] = useState<Page[]>([])
     const [formData, setFormData] = useState({
         title: "",
         description: "",
         slug: "",
         seoTitle: "",
         seoDescription: "",
+        parentId: "",
         isActive: true
     })
+
+    // Mevcut sayfaları yükle
+    useEffect(() => {
+        if (open) {
+            fetchPages()
+        }
+    }, [open])
+
+    const fetchPages = async () => {
+        try {
+            const response = await fetch("/api/pages")
+            if (response.ok) {
+                const data = await response.json()
+                setPages(data.pages || [])
+            }
+        } catch (error) {
+            console.error("Error fetching pages:", error)
+        }
+    }
 
     const generateSlug = (title: string) => {
         return title
@@ -68,12 +102,18 @@ export function CreatePageDialog({ open, onOpenChange, onPageCreated }: CreatePa
         setLoading(true)
 
         try {
+            const submitData = {
+                ...formData,
+                parentId: formData.parentId || null
+                // order otomatik olarak API'de hesaplanacak
+            }
+
             const response = await fetch("/api/pages", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(submitData),
             })
 
             if (response.ok) {
@@ -87,6 +127,7 @@ export function CreatePageDialog({ open, onOpenChange, onPageCreated }: CreatePa
                     slug: "",
                     seoTitle: "",
                     seoDescription: "",
+                    parentId: "",
                     isActive: true
                 })
             } else {
@@ -102,7 +143,7 @@ export function CreatePageDialog({ open, onOpenChange, onPageCreated }: CreatePa
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Yeni Sayfa Oluştur</DialogTitle>
                     <DialogDescription>
@@ -136,6 +177,31 @@ export function CreatePageDialog({ open, onOpenChange, onPageCreated }: CreatePa
                                 disabled={loading}
                                 rows={3}
                             />
+                        </div>
+
+                        {/* Parent Page */}
+                        <div className="space-y-2">
+                            <Label htmlFor="parentId">Üst Sayfa</Label>
+                            <Select
+                                value={formData.parentId || "none"}
+                                onValueChange={(value) => setFormData(prev => ({ ...prev, parentId: value === "none" ? "" : value }))}
+                                disabled={loading}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Üst sayfa seçin (isteğe bağlı)" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">Ana Sayfa (Üst seviye)</SelectItem>
+                                    {pages.map((page) => (
+                                        <SelectItem key={page.id} value={page.id}>
+                                            {page.title}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">
+                                Bu sayfa başka bir sayfanın alt sayfası olacaksa üst sayfayı seçin
+                            </p>
                         </div>
 
                         {/* Slug */}

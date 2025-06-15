@@ -76,12 +76,16 @@ model Page {
   slug           String   @unique
   seoTitle       String?
   seoDescription String?
+  parentId       String?
+  order          Int      @default(0)
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   // Relations
-  modules PageModule[]
+  parent   Page?        @relation("PageHierarchy", fields: [parentId], references: [id])
+  children Page[]       @relation("PageHierarchy")
+  modules  PageModule[]
 
   @@map("pages")
 }

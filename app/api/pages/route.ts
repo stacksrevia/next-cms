@@ -14,14 +14,33 @@ export async function GET() {
 
         const pages = await prisma.page.findMany({
             include: {
+                parent: {
+                    select: {
+                        id: true,
+                        title: true,
+                        slug: true
+                    }
+                },
+                children: {
+                    select: {
+                        id: true,
+                        title: true,
+                        slug: true,
+                        order: true
+                    },
+                    orderBy: { order: 'asc' }
+                },
                 modules: {
                     orderBy: { order: 'asc' }
                 }
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: [
+                { order: 'asc' },
+                { createdAt: 'desc' }
+            ]
         })
 
-        return NextResponse.json(pages)
+        return NextResponse.json({ pages })
     } catch (error) {
         console.error("Error fetching pages:", error)
         return NextResponse.json(
@@ -41,7 +60,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json()
-        const { title, description, slug, seoTitle, seoDescription, isActive } = body
+        const { title, description, slug, seoTitle, seoDescription, parentId, isActive } = body
 
         // Slug kontrolü
         const existingPage = await prisma.page.findUnique({
@@ -55,6 +74,27 @@ export async function POST(request: NextRequest) {
             )
         }
 
+        // Parent sayfa kontrolü
+        if (parentId) {
+            const parentPage = await prisma.page.findUnique({
+                where: { id: parentId }
+            })
+
+            if (!parentPage) {
+                return NextResponse.json(
+                    { error: "Üst sayfa bulunamadı" },
+                    { status: 400 }
+                )
+            }
+        }
+
+        // Otomatik sıra hesaplama - aynı seviyedeki sayfa sayısı
+        const sameLevelPagesCount = await prisma.page.count({
+            where: {
+                parentId: parentId || null
+            }
+        })
+
         const page = await prisma.page.create({
             data: {
                 title,
@@ -62,9 +102,27 @@ export async function POST(request: NextRequest) {
                 slug,
                 seoTitle,
                 seoDescription,
+                parentId: parentId || null,
+                order: sameLevelPagesCount, // 0'dan başlayarak otomatik sıra
                 isActive: isActive ?? true
             },
             include: {
+                parent: {
+                    select: {
+                        id: true,
+                        title: true,
+                        slug: true
+                    }
+                },
+                children: {
+                    select: {
+                        id: true,
+                        title: true,
+                        slug: true,
+                        order: true
+                    },
+                    orderBy: { order: 'asc' }
+                },
                 modules: true
             }
         })

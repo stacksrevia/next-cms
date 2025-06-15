@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { AppInitializer } from "@/components/providers/app-initializer"
 import { AdminLayoutClient } from "@/components/admin/admin-layout-client"
 
 export const metadata: Metadata = {
@@ -11,5 +12,5 @@ export default function AdminLayout({
 }: {
     children: React.ReactNode
 }) {
-    return <AdminLayoutClient>{children}</AdminLayoutClient>
+    return <AppInitializer><AdminLayoutClient>{children}</AdminLayoutClient></AppInitializer>
 } 

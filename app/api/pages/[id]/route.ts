@@ -118,9 +118,28 @@ export async function DELETE(
             return NextResponse.json({ error: "Sayfa bulunamadı" }, { status: 404 })
         }
 
-        // Sayfayı sil (modüller cascade ile silinecek)
-        await prisma.page.delete({
-            where: { id: params.id }
+        // Transaction ile sayfa silme ve sıra yeniden düzenleme
+        await prisma.$transaction(async (tx) => {
+            // Sayfayı sil (modüller cascade ile silinecek)
+            await tx.page.delete({
+                where: { id: params.id }
+            })
+
+            // Aynı seviyedeki diğer sayfaların sıralarını yeniden düzenle
+            const sameLevelPages = await tx.page.findMany({
+                where: {
+                    parentId: existingPage.parentId
+                },
+                orderBy: { order: 'asc' }
+            })
+
+            // Sıraları 0'dan başlayarak yeniden ata
+            for (let i = 0; i < sameLevelPages.length; i++) {
+                await tx.page.update({
+                    where: { id: sameLevelPages[i].id },
+                    data: { order: i }
+                })
+            }
         })
 
         return NextResponse.json({ message: "Sayfa başarıyla silindi" })
