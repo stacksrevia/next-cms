@@ -1,7 +1,6 @@
-import { ViraModuleRenderer } from "./vira-module-renderer"
-import { ServerNavbar } from "./server-navbar"
-import { ViraFooter } from "./vira-footer"
-import styles from "@/styles/page-renderer.module.css"
+import { ServerNavbar } from "@/components/server-navbar"
+import { ModuleRenderer } from "@/components/module-renderer"
+import { prisma } from "@/lib/prisma"
 
 interface GlobalPage {
     id: string
@@ -10,6 +9,8 @@ interface GlobalPage {
     slug: string
     seoTitle?: string
     seoDescription?: string
+    customCss?: string
+    customJs?: string
     isActive: boolean
     createdAt: string
     updatedAt: string
@@ -31,48 +32,84 @@ interface PageModule {
 }
 
 interface PageRendererProps {
-    page: GlobalPage
-    languageCode: string
+    page: {
+        id: string
+        title: string
+        description?: string | null
+        content?: string | null
+        // Ana sayfa için direkt modules
+        modules?: Array<{
+            id: string
+            type: string
+            content: any
+            order: number
+            isActive?: boolean
+        }>
+        // Slug sayfaları için globalPage.modules
+        globalPage?: {
+            id: string
+            slug: string
+            modules: Array<{
+                id: string
+                type: string
+                content: any
+                order: number
+                isActive?: boolean
+            }>
+        }
+    }
+    language?: string
+    languageCode?: string
 }
 
-export async function PageRenderer({ page, languageCode }: PageRendererProps) {
+export async function PageRenderer({ page, language, languageCode }: PageRendererProps) {
+    // Global tasarım ayarlarını getir
+    const globalDesign = await prisma.globalDesign.findFirst()
+
+    // Language parametresini normalize et
+    const currentLanguage = language || languageCode || 'tr'
+
+    // Modules'ı doğru yerden al
+    const modules = page.globalPage?.modules || page.modules || []
+
     return (
-        <div className={styles.viraPage}>
-            {/* Navigation */}
-            <ServerNavbar currentLanguage={languageCode} />
+        <>
+            {/* Global Custom CSS */}
+            {globalDesign?.customCss && (
+                <style dangerouslySetInnerHTML={{ __html: globalDesign.customCss }} />
+            )}
 
-            {/* Page Header - Optional, can be hidden if first module is HERO */}
-            {page.modules.length === 0 || page.modules[0]?.type !== "HERO" ? (
-                <div className={styles.viraPageHeader}>
-                    <div className={styles.viraPageHeaderContainer}>
-                        <h1 className={styles.viraPageTitle}>{page.title}</h1>
-                        {page.description && (
-                            <p className={styles.viraPageDescription}>{page.description}</p>
-                        )}
-                    </div>
-                </div>
-            ) : null}
+            <div className="min-h-screen">
+                <ServerNavbar currentLanguage={currentLanguage} />
 
-            {/* Page Modules */}
-            <div className={styles.viraPageContent}>
-                {page.modules.length === 0 ? (
-                    <div className={styles.viraPageEmpty}>
-                        <div className={styles.viraPageEmptyContainer}>
-                            <h2 className={styles.viraPageEmptyTitle}>İçerik Hazırlanıyor</h2>
-                            <p className={styles.viraPageEmptyText}>
-                                Bu sayfa henüz içerik modülleri ile doldurulmamış.
-                            </p>
-                        </div>
-                    </div>
-                ) : (
-                    page.modules.map((module) => (
-                        <ViraModuleRenderer key={module.id} module={module} />
-                    ))
-                )}
+                <main>
+                    {/* Page Content */}
+                    {page.content && (
+                        <div
+                            className="prose max-w-none"
+                            dangerouslySetInnerHTML={{ __html: page.content }}
+                        />
+                    )}
+
+                    {/* Page Modules */}
+                    {modules
+                        .sort((a, b) => a.order - b.order)
+                        .map((module) => (
+                            <ModuleRenderer
+                                key={module.id}
+                                module={{
+                                    ...module,
+                                    isActive: module.isActive ?? true
+                                }}
+                            />
+                        ))}
+                </main>
             </div>
 
-            {/* Footer */}
-            <ViraFooter />
-        </div>
+            {/* Global Custom JavaScript */}
+            {globalDesign?.customJs && (
+                <script dangerouslySetInnerHTML={{ __html: globalDesign.customJs }} />
+            )}
+        </>
     )
 } 

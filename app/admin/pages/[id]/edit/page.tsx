@@ -1,32 +1,15 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
-import { Separator } from "@/components/ui/separator"
-import {
-    Save,
-    ArrowLeft,
-    Eye,
-    Plus,
-    Settings,
-    Type,
-    Image,
-    Video,
-    Mail,
-    Star,
-    Mountain,
-    Grid3X3,
-    Trash2,
-    GripVertical
-} from "lucide-react"
-import { toast } from "sonner"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
     Select,
     SelectContent,
@@ -35,25 +18,18 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import {
-    DndContext,
-    closestCenter,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
-    DragEndEvent,
-} from '@dnd-kit/core'
-import {
-    arrayMove,
-    SortableContext,
-    sortableKeyboardCoordinates,
-    verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import {
-    useSortable,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import ReactCountryFlag from "react-country-flag"
+    ArrowLeft,
+    Save,
+    Eye,
+    Settings,
+    Grid3X3,
+    Plus,
+    Trash2,
+    Edit,
+    GripVertical
+} from "lucide-react"
+import { toast } from "sonner"
+import ReactCountryFlag from 'react-country-flag'
 
 interface Module {
     id: string
@@ -94,163 +70,113 @@ interface Page {
     modules: Module[]
 }
 
-const moduleTypes = [
-    {
-        type: "TEXT_IMAGE",
-        name: "Metin + Resim",
-        description: "Metin ve resim kombinasyonu",
-        icon: Type,
-        color: "bg-blue-500"
-    },
-    {
-        type: "PARALLAX",
-        name: "Parallax",
-        description: "Parallax efektli bölüm",
-        icon: Mountain,
-        color: "bg-purple-500"
-    },
-    {
-        type: "HERO",
-        name: "Hero Bölümü",
-        description: "Ana başlık bölümü",
-        icon: Star,
-        color: "bg-yellow-500"
-    },
-    {
-        type: "GALLERY",
-        name: "Galeri",
-        description: "Resim galerisi",
-        icon: Grid3X3,
-        color: "bg-green-500"
-    },
-    {
-        type: "VIDEO",
-        name: "Video",
-        description: "Video oynatıcı",
-        icon: Video,
-        color: "bg-red-500"
-    },
-    {
-        type: "CONTACT_FORM",
-        name: "İletişim Formu",
-        description: "İletişim formu",
-        icon: Mail,
-        color: "bg-indigo-500"
-    },
-    {
-        type: "TESTIMONIALS",
-        name: "Referanslar",
-        description: "Müşteri yorumları",
-        icon: Star,
-        color: "bg-orange-500"
-    }
-]
+interface FormData {
+    title: string
+    description: string
+    slug: string
+    seoTitle: string
+    seoDescription: string
+    isActive: boolean
+}
 
 export default function PageEditor() {
     const params = useParams()
     const router = useRouter()
+    const pageId = params.id as string
+
     const [page, setPage] = useState<Page | null>(null)
     const [languages, setLanguages] = useState<Language[]>([])
-    const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null)
+    const [currentLanguage, setCurrentLanguage] = useState<Language | null>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [formData, setFormData] = useState({
+
+    const [formData, setFormData] = useState<FormData>({
         title: "",
         description: "",
         slug: "",
         seoTitle: "",
         seoDescription: "",
-        isActive: true
+        isActive: true,
     })
 
-    // Dilleri getir
+    useEffect(() => {
+        fetchLanguages()
+        fetchPage()
+    }, [pageId])
+
     const fetchLanguages = async () => {
         try {
             const response = await fetch("/api/admin/languages")
             if (response.ok) {
                 const data = await response.json()
-                setLanguages(data.languages || [])
+                setLanguages(data)
 
                 // Varsayılan dili seç
-                if (!selectedLanguage && data.languages && data.languages.length > 0) {
-                    const defaultLang = data.languages.find((lang: Language) => lang.isDefault) || data.languages[0]
-                    setSelectedLanguage(defaultLang)
+                const defaultLang = data.find((lang: Language) => lang.isDefault)
+                if (defaultLang) {
+                    setCurrentLanguage(defaultLang)
                 }
             }
         } catch (error) {
-            console.error('Error fetching languages:', error)
+            console.error("Error fetching languages:", error)
         }
     }
 
     const fetchPage = async () => {
         try {
-            const queryParams = new URLSearchParams()
-            if (selectedLanguage) {
-                queryParams.append('languageId', selectedLanguage.id)
-            }
-
-            const response = await fetch(`/api/admin/pages/${params.id}?${queryParams}`)
+            const response = await fetch(`/api/admin/pages/${pageId}`)
             if (response.ok) {
                 const data = await response.json()
                 setPage(data)
                 setFormData({
-                    title: data.title,
+                    title: data.title || "",
                     description: data.description || "",
-                    slug: data.slug,
+                    slug: data.slug || "",
                     seoTitle: data.seoTitle || "",
                     seoDescription: data.seoDescription || "",
-                    isActive: data.isActive
+                    isActive: data.isActive ?? true,
                 })
+
+                if (data.language) {
+                    setCurrentLanguage(data.language)
+                }
             } else {
                 toast.error("Sayfa yüklenirken hata oluştu")
-                router.push("/admin/pages")
             }
         } catch (error) {
+            console.error("Error fetching page:", error)
             toast.error("Sayfa yüklenirken hata oluştu")
-            router.push("/admin/pages")
         } finally {
             setLoading(false)
         }
     }
 
-    useEffect(() => {
-        fetchLanguages()
-    }, [])
-
-    useEffect(() => {
-        if (params.id && selectedLanguage) {
-            fetchPage()
-        }
-    }, [params.id, selectedLanguage])
-
     const handleLanguageChange = (language: Language) => {
-        setSelectedLanguage(language)
-        setLoading(true)
+        setCurrentLanguage(language)
+        // TODO: Dil değiştirildiğinde sayfayı yeniden yükle
     }
 
     const handleSave = async () => {
         setSaving(true)
         try {
-            const response = await fetch(`/api/admin/pages/${params.id}`, {
+            const response = await fetch(`/api/admin/pages/${pageId}`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                    ...formData,
-                    languageId: selectedLanguage?.id
-                }),
+                body: JSON.stringify(formData),
             })
 
             if (response.ok) {
-                toast.success("Sayfa başarıyla güncellendi")
-                await fetchPage()
+                toast.success("Sayfa başarıyla kaydedildi")
+                fetchPage() // Sayfayı yeniden yükle
             } else {
                 const error = await response.json()
-                toast.error(error.error || "Sayfa güncellenirken hata oluştu")
+                toast.error(error.message || "Kaydetme sırasında hata oluştu")
             }
         } catch (error) {
-            toast.error("Sayfa güncellenirken hata oluştu")
+            console.error("Error saving page:", error)
+            toast.error("Kaydetme sırasında hata oluştu")
         } finally {
             setSaving(false)
         }
@@ -258,53 +184,51 @@ export default function PageEditor() {
 
     const addModule = async (moduleType: string) => {
         try {
-            const response = await fetch(`/api/admin/pages/${params.id}/modules`, {
+            const response = await fetch(`/api/admin/pages/${pageId}/modules`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
                     type: moduleType,
-                    order: page?.modules.length || 0,
                     content: getDefaultModuleContent(moduleType),
-                    languageId: selectedLanguage?.id
+                    order: page?.modules.length || 0,
                 }),
             })
 
             if (response.ok) {
                 toast.success("Modül eklendi")
-                await fetchPage()
+                fetchPage()
             } else {
                 toast.error("Modül eklenirken hata oluştu")
             }
         } catch (error) {
+            console.error("Error adding module:", error)
             toast.error("Modül eklenirken hata oluştu")
         }
     }
 
     const getDefaultModuleContent = (type: string) => {
         switch (type) {
-            case "TEXT_IMAGE":
-                return {
-                    title: "Yeni Başlık",
-                    text: "Buraya metin yazın...",
-                    image: "",
-                    imagePosition: "right"
-                }
             case "HERO":
                 return {
                     title: "Ana Başlık",
                     subtitle: "Alt başlık",
-                    backgroundImage: "",
-                    buttonText: "Daha Fazla",
-                    buttonLink: "#"
+                    buttonText: "Buton Metni",
+                    backgroundImage: ""
                 }
-            case "PARALLAX":
+            case "TEXT_IMAGE":
                 return {
-                    title: "Parallax Başlık",
-                    text: "Parallax açıklama",
-                    backgroundImage: "",
-                    height: "400px"
+                    title: "Başlık",
+                    text: "Metin içeriği",
+                    image: "",
+                    imagePosition: "right"
+                }
+            case "GALLERY":
+                return {
+                    title: "Galeri",
+                    description: "Galeri açıklaması",
+                    images: []
                 }
             default:
                 return {}
@@ -313,22 +237,21 @@ export default function PageEditor() {
 
     if (loading) {
         return (
-            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-                <div className="flex items-center justify-center min-h-[400px]">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
+            <div className="flex items-center justify-center h-screen">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
         )
     }
 
     if (!page) {
         return (
-            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+            <div className="flex items-center justify-center h-screen">
                 <div className="text-center">
-                    <h2 className="text-2xl font-bold">Sayfa bulunamadı</h2>
-                    <Button onClick={() => router.push("/admin/pages")} className="mt-4">
+                    <h2 className="text-2xl font-bold mb-2">Sayfa Bulunamadı</h2>
+                    <p className="text-muted-foreground mb-4">Aradığınız sayfa bulunamadı.</p>
+                    <Button onClick={() => router.push("/admin/pages")}>
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Geri Dön
+                        Sayfalara Dön
                     </Button>
                 </div>
             </div>
@@ -336,47 +259,42 @@ export default function PageEditor() {
     }
 
     return (
-        <div className="flex-1 h-screen overflow-hidden">
+        <div className="h-screen flex flex-col">
             {/* Header */}
             <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div className="flex h-14 items-center px-4">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => router.push("/admin/pages")}
-                    >
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Geri
-                    </Button>
-
-                    <div className="flex-1 px-4">
-                        <h1 className="text-lg font-semibold">{page.title} - Düzenle</h1>
-                        {selectedLanguage && (
+                <div className="flex h-14 items-center justify-between px-6">
+                    <div className="flex items-center space-x-4">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => router.push("/admin/pages")}
+                        >
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Geri
+                        </Button>
+                        <div>
+                            <h1 className="text-lg font-semibold">{page.title}</h1>
                             <p className="text-sm text-muted-foreground">
-                                {selectedLanguage.name} dilinde düzenleniyor
+                                Sayfa Düzenleme
                             </p>
-                        )}
+                        </div>
                     </div>
 
-                    {/* Dil Seçici */}
-                    <div className="flex items-center space-x-2 mr-4">
-                        <Label htmlFor="language-select" className="text-sm font-medium">
-                            Dil:
-                        </Label>
+                    <div className="flex items-center space-x-4">
                         <Select
-                            value={selectedLanguage?.id || ""}
+                            value={currentLanguage?.id}
                             onValueChange={(value) => {
                                 const language = languages.find(lang => lang.id === value)
                                 if (language) handleLanguageChange(language)
                             }}
                         >
-                            <SelectTrigger className="w-[150px]">
-                                <SelectValue placeholder="Dil seçin" />
+                            <SelectTrigger className="w-40">
+                                <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                {languages.filter(lang => lang.isActive).map((language) => (
+                                {languages.map((language) => (
                                     <SelectItem key={language.id} value={language.id}>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center space-x-2">
                                             <ReactCountryFlag
                                                 countryCode={language.flag}
                                                 svg
@@ -424,63 +342,65 @@ export default function PageEditor() {
                                     Sayfa Ayarları
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="title">Sayfa Başlığı</Label>
-                                        <Input
-                                            id="title"
-                                            value={formData.title}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                                        />
+                            <CardContent>
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="title">Sayfa Başlığı</Label>
+                                            <Input
+                                                id="title"
+                                                value={formData.title}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="slug">URL Slug</Label>
+                                            <Input
+                                                id="slug"
+                                                value={formData.slug}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="slug">URL Slug</Label>
-                                        <Input
-                                            id="slug"
-                                            value={formData.slug}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                                        />
-                                    </div>
-                                </div>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="description">Açıklama</Label>
-                                    <Textarea
-                                        id="description"
-                                        value={formData.description}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                                        rows={2}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="seoTitle">SEO Başlığı</Label>
-                                        <Input
-                                            id="seoTitle"
-                                            value={formData.seoTitle}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, seoTitle: e.target.value }))}
+                                        <Label htmlFor="description">Açıklama</Label>
+                                        <Textarea
+                                            id="description"
+                                            value={formData.description}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                                            rows={2}
                                         />
                                     </div>
-                                    <div className="flex items-center space-x-2">
-                                        <Switch
-                                            id="isActive"
-                                            checked={formData.isActive}
-                                            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
-                                        />
-                                        <Label htmlFor="isActive">Sayfa aktif</Label>
-                                    </div>
-                                </div>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="seoDescription">SEO Açıklaması</Label>
-                                    <Textarea
-                                        id="seoDescription"
-                                        value={formData.seoDescription}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, seoDescription: e.target.value }))}
-                                        rows={2}
-                                    />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="seoTitle">SEO Başlığı</Label>
+                                            <Input
+                                                id="seoTitle"
+                                                value={formData.seoTitle}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, seoTitle: e.target.value }))}
+                                            />
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                id="isActive"
+                                                checked={formData.isActive}
+                                                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
+                                            />
+                                            <Label htmlFor="isActive">Sayfa aktif</Label>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="seoDescription">SEO Açıklaması</Label>
+                                        <Textarea
+                                            id="seoDescription"
+                                            value={formData.seoDescription}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, seoDescription: e.target.value }))}
+                                            rows={2}
+                                        />
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -509,20 +429,27 @@ export default function PageEditor() {
                                                     <CardContent className="p-4">
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center space-x-3">
-                                                                <Badge variant="outline">{module.type}</Badge>
-                                                                <span className="font-medium">
-                                                                    {moduleTypes.find(t => t.type === module.type)?.name || module.type}
-                                                                </span>
+                                                                <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
+                                                                <div>
+                                                                    <h4 className="font-medium">{module.type}</h4>
+                                                                    <p className="text-sm text-muted-foreground">
+                                                                        Sıra: {module.order + 1}
+                                                                    </p>
+                                                                </div>
                                                             </div>
                                                             <div className="flex items-center space-x-2">
-                                                                <Badge variant={module.isActive ? "default" : "secondary"} className="text-xs">
+                                                                <Badge variant={module.isActive ? "default" : "secondary"}>
                                                                     {module.isActive ? "Aktif" : "Pasif"}
                                                                 </Badge>
                                                                 <Button variant="outline" size="sm">
-                                                                    Düzenle
+                                                                    <Edit className="h-4 w-4" />
+                                                                </Button>
+                                                                <Button variant="outline" size="sm">
+                                                                    <Trash2 className="h-4 w-4" />
                                                                 </Button>
                                                             </div>
                                                         </div>
+
                                                         <div className="mt-2 text-sm text-muted-foreground">
                                                             Sıra: {module.order + 1}
                                                         </div>
@@ -544,51 +471,31 @@ export default function PageEditor() {
                             <Badge variant="outline">{page.modules.length} modül</Badge>
                         </div>
 
-                        <div className="space-y-3">
-                            {moduleTypes.map((moduleType) => (
-                                <Card
-                                    key={moduleType.type}
-                                    className="cursor-pointer hover:shadow-md transition-shadow"
-                                    onClick={() => addModule(moduleType.type)}
-                                >
-                                    <CardContent className="p-4">
-                                        <div className="flex items-center space-x-3">
-                                            <div className={`p-2 rounded-lg ${moduleType.color} text-white`}>
-                                                <moduleType.icon className="h-4 w-4" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <h4 className="font-medium text-sm">{moduleType.name}</h4>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {moduleType.description}
-                                                </p>
-                                            </div>
-                                            <Plus className="h-4 w-4 text-muted-foreground" />
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-
-                        <Separator className="my-6" />
-
-                        <div>
-                            <h4 className="font-medium mb-3">Sayfa Bilgileri</h4>
-                            <div className="space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Oluşturulma:</span>
-                                    <span>{new Date(page.createdAt).toLocaleDateString('tr-TR')}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Güncelleme:</span>
-                                    <span>{new Date(page.updatedAt).toLocaleDateString('tr-TR')}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Durum:</span>
-                                    <Badge variant={page.isActive ? "default" : "secondary"} className="text-xs">
-                                        {page.isActive ? "Aktif" : "Pasif"}
-                                    </Badge>
-                                </div>
-                            </div>
+                        <div className="space-y-2">
+                            <Button
+                                variant="outline"
+                                className="w-full justify-start"
+                                onClick={() => addModule("HERO")}
+                            >
+                                <Plus className="mr-2 h-4 w-4" />
+                                Hero Modülü
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="w-full justify-start"
+                                onClick={() => addModule("TEXT_IMAGE")}
+                            >
+                                <Plus className="mr-2 h-4 w-4" />
+                                Metin + Resim
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="w-full justify-start"
+                                onClick={() => addModule("GALLERY")}
+                            >
+                                <Plus className="mr-2 h-4 w-4" />
+                                Galeri
+                            </Button>
                         </div>
                     </div>
                 </div>

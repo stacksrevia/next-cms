@@ -80,10 +80,8 @@ model Language {
   updatedAt DateTime @updatedAt
 
   // Relations
-  pageContents PageContent[]
-  pageModules  PageModule[]
-
-  @@map("languages")
+  pages      PageContent[]
+  PageModule PageModule[]
 }
 
 // Global Page - Sayfa yapısı ve hiyerarşi
@@ -101,6 +99,7 @@ model GlobalPage {
   parent   GlobalPage?   @relation("GlobalPageHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   children GlobalPage[]  @relation("GlobalPageHierarchy")
   contents PageContent[]
+  modules  PageModule[]
 
   @@index([parentId, order])
 }
@@ -115,6 +114,8 @@ model PageContent {
   slug           String // Dile özel slug
   seoTitle       String?
   seoDescription String?
+  content        String?
+  isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -143,8 +144,10 @@ model PageModule {
   updatedAt     DateTime @updatedAt
 
   // Relations
-  pageContent PageContent @relation(fields: [pageContentId], references: [id], onDelete: Cascade)
-  language    Language    @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  pageContent  PageContent @relation(fields: [pageContentId], references: [id], onDelete: Cascade)
+  language     Language    @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  GlobalPage   GlobalPage? @relation(fields: [globalPageId], references: [id])
+  globalPageId String?
 
   @@index([pageContentId, order])
   @@index([languageId])
@@ -169,4 +172,12 @@ model Page {
   @@index([languageId])
   @@index([parentId])
   @@map("page_old")
+}
+
+model GlobalDesign {
+  id        String   @id @default(cuid())
+  customCss String?
+  customJs  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

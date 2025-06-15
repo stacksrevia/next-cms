@@ -11,7 +11,8 @@ import {
     Home,
     FileText,
     BarChart3,
-    Globe
+    Globe,
+    Palette
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -46,6 +47,11 @@ const menuItems = [
         title: "Dil Yönetimi",
         icon: Globe,
         href: "/admin/languages",
+    },
+    {
+        title: "Tasarım",
+        icon: Palette,
+        href: "/admin/design",
     },
     {
         title: "Kullanıcılar",
