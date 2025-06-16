@@ -2,12 +2,19 @@
 
 import { useState, useRef, useEffect } from "react"
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { Navigation, Pagination, Autoplay } from 'swiper/modules'
+import { Navigation, Pagination, Autoplay, EffectFade, EffectCube, EffectCoverflow, EffectFlip, EffectCards, EffectCreative } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
+import 'swiper/css/effect-fade'
+import 'swiper/css/effect-cube'
+import 'swiper/css/effect-coverflow'
+import 'swiper/css/effect-flip'
+import 'swiper/css/effect-cards'
+import 'swiper/css/effect-creative'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import '@/styles/vira-module-renderer.module.css'
 
 interface PageModule {
     id: string
@@ -182,7 +189,395 @@ function ParallaxModule({ content }: { content: any }) {
 
 // Slider Module
 function SliderModule({ content }: { content: any }) {
-    return <DevelopmentPlaceholder moduleName="Slider Modülü" />
+    const {
+        sliderType = "horizontal",
+        loop = false,
+        autoplay = false,
+        navigation = true,
+        animatedArrows = false,
+        pagination = true,
+        slidesPerView = 1,
+        isActive = true,
+        videoDelay = 3300,
+        autoplayDelay = 2500,
+        speed = 1000,
+        titleSize = "32px",
+        paragraphSize = "14px",
+        margin = "",
+        height = "85vh",
+        effect = "",
+        slides = [],
+        uniqueId = "vira-slider-1"
+    } = content
+
+    if (!isActive) return null
+
+    const containerStyle: React.CSSProperties = {
+        margin: margin || undefined,
+        height: height || "85vh",
+    }
+
+    // Swiper modülleri
+    const getModules = () => {
+        const modules = []
+        if (navigation) modules.push(Navigation)
+        if (pagination) modules.push(Pagination)
+        if (autoplay) modules.push(Autoplay)
+        
+        switch (effect) {
+            case "fade":
+                modules.push(EffectFade)
+                break
+            case "cube":
+                modules.push(EffectCube)
+                break
+            case "coverflow":
+                modules.push(EffectCoverflow)
+                break
+            case "flip":
+                modules.push(EffectFlip)
+                break
+            case "cards":
+                modules.push(EffectCards)
+                break
+            case "creative":
+                modules.push(EffectCreative)
+                break
+        }
+        
+        return modules
+    }
+
+    // Swiper konfigürasyonu
+    const swiperConfig = {
+        modules: getModules(),
+        direction: sliderType === "vertical" ? "vertical" : "horizontal",
+        loop: loop,
+        autoplay: autoplay ? {
+            delay: autoplayDelay,
+            disableOnInteraction: false,
+        } : false,
+        speed: speed,
+        effect: effect || "slide",
+        navigation: navigation ? {
+            nextEl: `.swiper-button-next-${uniqueId}`,
+            prevEl: `.swiper-button-prev-${uniqueId}`,
+        } : false,
+        pagination: pagination ? {
+            el: `.swiper-pagination-${uniqueId}`,
+            clickable: true,
+        } : false,
+        slidesPerView: effect === "fade" || effect === "cube" || effect === "flip" || effect === "cards" || effect === "creative" ? 1 : slidesPerView,
+        spaceBetween: 0,
+        // Efekt özel ayarları
+        fadeEffect: effect === "fade" ? {
+            crossFade: true
+        } : undefined,
+        cubeEffect: effect === "cube" ? {
+            shadow: true,
+            slideShadows: true,
+            shadowOffset: 20,
+            shadowScale: 0.94
+        } : undefined,
+        coverflowEffect: effect === "coverflow" ? {
+            rotate: 50,
+            stretch: 0,
+            depth: 100,
+            modifier: 1,
+            slideShadows: true
+        } : undefined,
+        flipEffect: effect === "flip" ? {
+            slideShadows: true,
+            limitRotation: true
+        } : undefined,
+        cardsEffect: effect === "cards" ? {
+            slideShadows: true,
+            transformEl: null
+        } : undefined,
+        creativeEffect: effect === "creative" ? {
+            prev: {
+                shadow: true,
+                translate: [0, 0, -400]
+            },
+            next: {
+                translate: ["100%", 0, 0]
+            }
+        } : undefined
+    }
+
+    return (
+        <div 
+            className="pageSliderContent"
+            id={`slider-${uniqueId}`}
+            style={{
+                ...containerStyle,
+                '--title-size': titleSize,
+                '--paragraph-size': paragraphSize
+            } as React.CSSProperties}
+        >
+            <Swiper
+                modules={getModules()}
+                direction={sliderType === "vertical" ? "vertical" : "horizontal"}
+                loop={loop}
+                autoplay={autoplay ? {
+                    delay: autoplayDelay,
+                    disableOnInteraction: false,
+                } : false}
+                speed={speed}
+                effect={effect || "slide"}
+                navigation={navigation ? {
+                    nextEl: `.swiper-button-next-${uniqueId}`,
+                    prevEl: `.swiper-button-prev-${uniqueId}`,
+                } : false}
+                pagination={pagination ? {
+                    el: `.swiper-pagination-${uniqueId}`,
+                    clickable: true,
+                } : false}
+                slidesPerView={effect === "fade" || effect === "cube" || effect === "flip" || effect === "cards" || effect === "creative" ? 1 : slidesPerView}
+                spaceBetween={0}
+                watchSlidesProgress={true}
+                watchOverflow={true}
+                fadeEffect={effect === "fade" ? {
+                    crossFade: true
+                } : undefined}
+                cubeEffect={effect === "cube" ? {
+                    shadow: true,
+                    slideShadows: true,
+                    shadowOffset: 20,
+                    shadowScale: 0.94
+                } : undefined}
+                coverflowEffect={effect === "coverflow" ? {
+                    rotate: 50,
+                    stretch: 0,
+                    depth: 100,
+                    modifier: 1,
+                    slideShadows: true
+                } : undefined}
+                flipEffect={effect === "flip" ? {
+                    slideShadows: true,
+                    limitRotation: true
+                } : undefined}
+                cardsEffect={effect === "cards" ? {
+                    slideShadows: true
+                } : undefined}
+                creativeEffect={effect === "creative" ? {
+                    prev: {
+                        shadow: true,
+                        translate: [0, 0, -400]
+                    },
+                    next: {
+                        translate: ["100%", 0, 0]
+                    }
+                } : undefined}
+                className={`sliderJs ${sliderType === "vertical" ? "swiper-vertical" : "swiper-horizontal"} ${effect ? `swiper-${effect}` : ""}`}
+                style={{
+                    width: '100%',
+                    height: height || '85vh',
+                    minHeight: '500px'
+                }}
+            >
+                {slides && slides.map((slide: any, index: number) => (
+                    <SwiperSlide 
+                        key={index}
+                        id={`slide-items-${index + 1}`}
+                        style={{
+                            backgroundImage: slide.type === 'image' && slide.imageUrl ? `url("${slide.imageUrl}")` : undefined,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            height: height || '85vh',
+                            minHeight: '500px',
+                            width: '100%'
+                        }}
+                    >
+                        <SlideContent 
+                            slide={slide} 
+                            titleSize={titleSize}
+                            paragraphSize={paragraphSize}
+                            videoDelay={videoDelay}
+                            slideIndex={index + 1}
+                            uniqueId={uniqueId}
+                        />
+                    </SwiperSlide>
+                ))}
+
+                {/* Navigation Arrows */}
+                {navigation && (
+                    <>
+                        <div className={`swiper-button-prev swiper-button-prev-${uniqueId} ${animatedArrows ? 'animated-arrow' : ''}`}></div>
+                        <div className={`swiper-button-next swiper-button-next-${uniqueId} ${animatedArrows ? 'animated-arrow' : ''}`}></div>
+                    </>
+                )}
+
+                {/* Pagination */}
+                {pagination && (
+                    <div className={`swiper-pagination swiper-pagination-${uniqueId}`}></div>
+                )}
+            </Swiper>
+        </div>
+    )
+}
+
+// Slide Content Component
+function SlideContent({ slide, titleSize, paragraphSize, videoDelay, slideIndex, uniqueId }: { 
+    slide: any, 
+    titleSize: string, 
+    paragraphSize: string,
+    videoDelay: number,
+    slideIndex: number,
+    uniqueId: string
+}) {
+    const {
+        type = "image",
+        imageUrl = "",
+        videoUrl = "",
+        title = "",
+        titleType = "h3",
+        content = "",
+        button1Text = "",
+        button1Link = "",
+        button2Text = "",
+        button2Link = "",
+        button3Text = "",
+        button3Link = "",
+        filigranColor = "#000000",
+        textColor = "#ffffff",
+        opacity = 0.5,
+        contentPosition = "left",
+        isActive = true
+    } = slide
+
+    if (!isActive) return null
+
+    const overlayStyle: React.CSSProperties = {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: filigranColor,
+        opacity: opacity,
+        zIndex: 2
+    }
+
+    const contentStyle: React.CSSProperties = {
+        color: textColor,
+        textAlign: contentPosition as any,
+        position: 'absolute',
+        zIndex: 4,
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: contentPosition === 'center' ? 'center' : contentPosition === 'right' ? 'flex-end' : 'flex-start'
+    }
+
+    return (
+        <>
+            {/* Background Video */}
+            {type === "video" && videoUrl && (
+                <video
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        zIndex: 1,
+                        animationDelay: `${videoDelay}ms`
+                    }}
+                >
+                    <source src={videoUrl} type="video/mp4" />
+                </video>
+            )}
+
+            {/* Background Image */}
+            {type === "image" && imageUrl && (
+                <img 
+                    src={imageUrl} 
+                    alt={title}
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        zIndex: 1
+                    }}
+                />
+            )}
+
+            {/* Overlay */}
+            <div style={overlayStyle}></div>
+
+            {/* Content */}
+            <div className="container" id={`sliderView-${slideIndex}`} style={contentStyle}>
+                <div className="slider-contents">
+                    <div>
+                        {title && (
+                            <h3 
+                                className="vira-slider-tag"
+                                style={{ 
+                                    color: textColor
+                                }}
+                                data-aos="fade-up"
+                                data-aos-duration="900"
+                                data-aos-delay="100"
+                            >
+                                {title}
+                            </h3>
+                        )}
+                        
+                        {content && (
+                            <div 
+                                className="slider-description vira-description"
+                                style={{ 
+                                    color: textColor
+                                }}
+                                dangerouslySetInnerHTML={{ __html: content }}
+                                data-aos="fade-up"
+                                data-aos-duration="900"
+                                data-aos-delay="200"
+                            />
+                        )}
+
+                        {/* Buttons */}
+                        {(button1Text || button2Text || button3Text) && (
+                            <div 
+                                className="vira-slider-buttons mt-4"
+                                data-aos="fade-up"
+                                data-aos-duration="900"
+                                data-aos-delay="300"
+                            >
+                                {button1Text && (
+                                    <a href={button1Link || "#"} className="btn btn-color">
+                                        {button1Text}
+                                    </a>
+                                )}
+                                
+                                {button2Text && (
+                                    <a href={button2Link || "#"} className="btn btn-outline">
+                                        {button2Text}
+                                    </a>
+                                )}
+                                
+                                {button3Text && (
+                                    <a href={button3Link || "#"} className="btn btn-ghost">
+                                        {button3Text}
+                                    </a>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </>
+    )
 }
 
 // Contact Form Module
