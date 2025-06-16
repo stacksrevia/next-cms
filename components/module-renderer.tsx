@@ -27,6 +27,36 @@ export function ModuleRenderer({ module }: ModuleRendererProps) {
     switch (module.type) {
         case "TEXT_IMAGE":
             return <TextImageModule content={module.content} />
+        case "PARALLAX":
+            return <ParallaxModule content={module.content} />
+        case "SLIDER":
+            return <SliderModule content={module.content} />
+        case "CONTACT_FORM":
+            return <ContactFormModule content={module.content} />
+        case "DYNAMIC_FORM":
+            return <DynamicFormModule content={module.content} />
+        case "GALLERY":
+            return <GalleryModule content={module.content} />
+        case "COUNTER":
+            return <CounterModule content={module.content} />
+        case "ICONS":
+            return <IconsModule content={module.content} />
+        case "BLOG_LIST":
+            return <BlogListModule content={module.content} />
+        case "HTML_EDITOR":
+            return <HtmlEditorModule content={module.content} />
+        case "PRODUCT_LIST":
+            return <ProductListModule content={module.content} />
+        case "CATEGORY_LIST":
+            return <CategoryListModule content={module.content} />
+        case "CATALOG_LIST":
+            return <CatalogListModule content={module.content} />
+        case "FILE_LIST":
+            return <FileListModule content={module.content} />
+        case "PARAGRAPH":
+            return <ParagraphModule content={module.content} />
+        case "NEWSLETTER":
+            return <NewsletterModule content={module.content} />
         default:
             return (
                 <div className="container mx-auto px-4 py-8">
@@ -42,7 +72,28 @@ export function ModuleRenderer({ module }: ModuleRendererProps) {
     }
 }
 
-
+// Development Placeholder Component
+function DevelopmentPlaceholder({ moduleName }: { moduleName: string }) {
+    return (
+        <div className="container mx-auto px-4 py-8">
+            <Card>
+                <CardContent className="p-8 text-center">
+                    <div className="mb-4">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-4">
+                            <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">{moduleName}</h3>
+                    <p className="text-muted-foreground">
+                        Bu modül hala geliştiriliyor...
+                    </p>
+                </CardContent>
+            </Card>
+        </div>
+    )
+}
 
 // Text + Image Module
 function TextImageModule({ content }: { content: any }) {
@@ -122,6 +173,81 @@ function TextImageModule({ content }: { content: any }) {
             </div>
         </div>
     )
+}
+
+// Parallax Module
+function ParallaxModule({ content }: { content: any }) {
+    return <DevelopmentPlaceholder moduleName="Parallax Modülü" />
+}
+
+// Slider Module
+function SliderModule({ content }: { content: any }) {
+    return <DevelopmentPlaceholder moduleName="Slider Modülü" />
+}
+
+// Contact Form Module
+function ContactFormModule({ content }: { content: any }) {
+    return <DevelopmentPlaceholder moduleName="İletişim Form Modülü" />
+}
+
+// Dynamic Form Module
+function DynamicFormModule({ content }: { content: any }) {
+    return <DevelopmentPlaceholder moduleName="Dinamik Form Modülü" />
+}
+
+// Gallery Module
+function GalleryModule({ content }: { content: any }) {
+    return <DevelopmentPlaceholder moduleName="Galeri Modülü" />
+}
+
+// Counter Module
+function CounterModule({ content }: { content: any }) {
+    return <DevelopmentPlaceholder moduleName="Counter Modülü" />
+}
+
+// Icons Module
+function IconsModule({ content }: { content: any }) {
+    return <DevelopmentPlaceholder moduleName="Icons Modülü" />
+}
+
+// Blog List Module
+function BlogListModule({ content }: { content: any }) {
+    return <DevelopmentPlaceholder moduleName="Blog Listeleme Modülü" />
+}
+
+// HTML Editor Module
+function HtmlEditorModule({ content }: { content: any }) {
+    return <DevelopmentPlaceholder moduleName="HTML Editor Modülü" />
+}
+
+// Product List Module
+function ProductListModule({ content }: { content: any }) {
+    return <DevelopmentPlaceholder moduleName="Ürün Listeleme Modülü" />
+}
+
+// Category List Module
+function CategoryListModule({ content }: { content: any }) {
+    return <DevelopmentPlaceholder moduleName="Kategori Listeleme Modülü" />
+}
+
+// Catalog List Module
+function CatalogListModule({ content }: { content: any }) {
+    return <DevelopmentPlaceholder moduleName="Katalog Listeleme Modülü" />
+}
+
+// File List Module
+function FileListModule({ content }: { content: any }) {
+    return <DevelopmentPlaceholder moduleName="Dosya Listeleme Modülü" />
+}
+
+// Paragraph Module
+function ParagraphModule({ content }: { content: any }) {
+    return <DevelopmentPlaceholder moduleName="Paragraf Modülü" />
+}
+
+// Newsletter Module
+function NewsletterModule({ content }: { content: any }) {
+    return <DevelopmentPlaceholder moduleName="E-Bülten Modülü" />
 }
 
 // Carousel Component with Swiper

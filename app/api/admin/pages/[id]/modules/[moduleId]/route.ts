@@ -23,9 +23,18 @@ export async function PATCH(
         }
 
         const { id, moduleId } = await params
-        const { content, languageId } = await request.json()
+        const { content, languageId, order } = await request.json()
 
         // Modülü güncelle
+        const updateData: any = {
+            content: content as any
+        }
+
+        // Order varsa ekle
+        if (typeof order === 'number') {
+            updateData.order = order
+        }
+
         const updatedModule = await prisma.pageModule.update({
             where: {
                 id: moduleId,
@@ -34,9 +43,7 @@ export async function PATCH(
                     languageId: languageId
                 }
             },
-            data: {
-                content: content as any
-            }
+            data: updateData
         })
 
         return NextResponse.json({

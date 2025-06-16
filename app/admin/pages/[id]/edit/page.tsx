@@ -26,11 +26,48 @@ import {
     Plus,
     Trash2,
     Edit,
-    GripVertical
+    GripVertical,
+    Image,
+    Type,
+    Mail,
+    FileText,
+    Images,
+    Hash,
+    Star,
+    List,
+    Code,
+    Package,
+    Folder,
+    BookOpen,
+    File,
+    AlignLeft,
+    Send,
+    Layers,
+    Sliders
 } from "lucide-react"
 import { toast } from "sonner"
 import ReactCountryFlag from 'react-country-flag'
 import { TextImageModal } from "@/components/admin/text-image-modal"
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from '@dnd-kit/core'
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import {
+    useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 interface Module {
     id: string
@@ -80,6 +117,172 @@ interface FormData {
     isActive: boolean
 }
 
+// Modül tipleri ve görsel bilgileri
+const MODULE_TYPES = {
+    TEXT_IMAGE: {
+        name: "Text + Image",
+        icon: Image,
+        description: "Metin ve resim kombinasyonu"
+    },
+    PARALLAX: {
+        name: "Parallax",
+        icon: Layers,
+        description: "Parallax efekti ile görsel"
+    },
+    SLIDER: {
+        name: "Slider",
+        icon: Sliders,
+        description: "Resim ve içerik slider'ı"
+    },
+    CONTACT_FORM: {
+        name: "İletişim Form",
+        icon: Mail,
+        description: "İletişim formu"
+    },
+    DYNAMIC_FORM: {
+        name: "Dinamik Form",
+        icon: FileText,
+        description: "Özelleştirilebilir form"
+    },
+    GALLERY: {
+        name: "Galeri",
+        icon: Images,
+        description: "Resim galerisi"
+    },
+    COUNTER: {
+        name: "Counter",
+        icon: Hash,
+        description: "Sayaç ve istatistikler"
+    },
+    ICONS: {
+        name: "Icons",
+        icon: Star,
+        description: "İkon listesi"
+    },
+    BLOG_LIST: {
+        name: "Blog Listeleme",
+        icon: BookOpen,
+        description: "Blog yazıları listesi"
+    },
+    HTML_EDITOR: {
+        name: "HTML Editor",
+        icon: Code,
+        description: "HTML içerik editörü"
+    },
+    PRODUCT_LIST: {
+        name: "Ürün Listeleme",
+        icon: Package,
+        description: "Ürün listesi"
+    },
+    CATEGORY_LIST: {
+        name: "Kategori Listeleme",
+        icon: List,
+        description: "Kategori listesi"
+    },
+    CATALOG_LIST: {
+        name: "Katalog Listeleme",
+        icon: Folder,
+        description: "Katalog listesi"
+    },
+    FILE_LIST: {
+        name: "Dosya Listeleme",
+        icon: File,
+        description: "Dosya listesi"
+    },
+    PARAGRAPH: {
+        name: "Paragraf",
+        icon: AlignLeft,
+        description: "Metin paragrafı"
+    },
+    NEWSLETTER: {
+        name: "E-Bülten",
+        icon: Send,
+        description: "E-bülten kayıt formu"
+    }
+}
+
+// Sortable Module Item Component
+function SortableModuleItem({ module, onEdit, onDelete }: {
+    module: Module
+    onEdit: (module: Module) => void
+    onDelete: (moduleId: string) => void
+}) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: module.id })
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    }
+
+    const moduleInfo = MODULE_TYPES[module.type as keyof typeof MODULE_TYPES]
+    const ModuleIcon = moduleInfo?.icon || Grid3X3
+
+    return (
+        <Card
+            ref={setNodeRef}
+            style={style}
+            className="border-l-4 border-l-primary"
+        >
+            <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                        <div
+                            {...attributes}
+                            {...listeners}
+                            className="cursor-grab active:cursor-grabbing"
+                        >
+                            <GripVertical className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <ModuleIcon className="h-4 w-4 text-primary" />
+                            <div>
+                                <h4 className="font-medium">
+                                    {moduleInfo?.name || module.type}
+                                    {module.content?.title && typeof module.content.title === 'string' && module.content.title.trim() && (
+                                        <span className="text-muted-foreground font-normal">
+                                            {" - "}{module.content.title}
+                                        </span>
+                                    )}
+                                </h4>
+                                <p className="text-sm text-muted-foreground">
+                                    {moduleInfo?.description || "Modül açıklaması"}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Badge variant={module.isActive ? "default" : "secondary"}>
+                            {module.isActive ? "Aktif" : "Pasif"}
+                        </Badge>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onEdit(module)}
+                        >
+                            <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onDelete(module.id)}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
+
 export default function PageEditor() {
     const params = useParams()
     const router = useRouter()
@@ -93,6 +296,17 @@ export default function PageEditor() {
     const [editingModule, setEditingModule] = useState<Module | null>(null)
     const [isModuleModalOpen, setIsModuleModalOpen] = useState(false)
 
+    // Confirmation dialog states
+    const [deleteConfirmation, setDeleteConfirmation] = useState<{
+        isOpen: boolean
+        moduleId: string | null
+        moduleName: string
+    }>({
+        isOpen: false,
+        moduleId: null,
+        moduleName: ""
+    })
+
     const [formData, setFormData] = useState<FormData>({
         title: "",
         description: "",
@@ -101,6 +315,13 @@ export default function PageEditor() {
         seoDescription: "",
         isActive: true,
     })
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    )
 
     useEffect(() => {
         fetchLanguages()
@@ -208,11 +429,6 @@ export default function PageEditor() {
     }
 
     const handleSave = async () => {
-        if (!currentLanguage) {
-            toast.error("Lütfen bir dil seçin")
-            return
-        }
-
         setSaving(true)
         try {
             const response = await fetch(`/api/admin/pages/${pageId}`, {
@@ -222,21 +438,19 @@ export default function PageEditor() {
                 },
                 body: JSON.stringify({
                     ...formData,
-                    languageId: currentLanguage.id
+                    languageId: currentLanguage?.id
                 }),
             })
 
             if (response.ok) {
-                toast.success(`${currentLanguage.name} dili için sayfa başarıyla kaydedildi`)
-                // Mevcut dil için sayfayı yeniden yükle
-                await handleLanguageChange(currentLanguage)
+                toast.success("Sayfa başarıyla güncellendi")
             } else {
                 const error = await response.json()
-                toast.error(error.message || "Kaydetme sırasında hata oluştu")
+                toast.error(error.message || "Sayfa güncellenirken hata oluştu")
             }
         } catch (error) {
             console.error("Error saving page:", error)
-            toast.error("Kaydetme sırasında hata oluştu")
+            toast.error("Sayfa güncellenirken hata oluştu")
         } finally {
             setSaving(false)
         }
@@ -285,14 +499,96 @@ export default function PageEditor() {
                     image: "",
                     imagePosition: "right"
                 }
+            case "PARALLAX":
+                return {
+                    title: "Parallax Başlığı",
+                    text: "Parallax içeriği",
+                    backgroundImage: ""
+                }
+            case "SLIDER":
+                return {
+                    title: "Slider Başlığı",
+                    slides: []
+                }
+            case "CONTACT_FORM":
+                return {
+                    title: "İletişim Formu",
+                    fields: ["name", "email", "message"]
+                }
+            case "DYNAMIC_FORM":
+                return {
+                    title: "Dinamik Form",
+                    fields: []
+                }
+            case "GALLERY":
+                return {
+                    title: "Galeri",
+                    images: []
+                }
+            case "COUNTER":
+                return {
+                    title: "Sayaçlar",
+                    counters: []
+                }
+            case "ICONS":
+                return {
+                    title: "İkonlar",
+                    icons: []
+                }
+            case "BLOG_LIST":
+                return {
+                    title: "Blog Yazıları",
+                    limit: 10
+                }
+            case "HTML_EDITOR":
+                return {
+                    title: "HTML İçerik",
+                    content: ""
+                }
+            case "PRODUCT_LIST":
+                return {
+                    title: "Ürünler",
+                    limit: 12
+                }
+            case "CATEGORY_LIST":
+                return {
+                    title: "Kategoriler",
+                    limit: 10
+                }
+            case "CATALOG_LIST":
+                return {
+                    title: "Kataloglar",
+                    limit: 10
+                }
+            case "FILE_LIST":
+                return {
+                    title: "Dosyalar",
+                    limit: 10
+                }
+            case "PARAGRAPH":
+                return {
+                    title: "Paragraf",
+                    content: "Paragraf içeriği"
+                }
+            case "NEWSLETTER":
+                return {
+                    title: "E-Bülten",
+                    description: "E-bülten kayıt formu"
+                }
             default:
                 return {}
         }
     }
 
     const handleEditModule = (module: Module) => {
-        setEditingModule(module)
-        setIsModuleModalOpen(true)
+        // Sadece TEXT_IMAGE modülü için modal aç
+        if (module.type === "TEXT_IMAGE") {
+            setEditingModule(module)
+            setIsModuleModalOpen(true)
+        } else {
+            // Diğer modüller için henüz modal yok
+            toast.info(`${MODULE_TYPES[module.type as keyof typeof MODULE_TYPES]?.name || module.type} modülü için düzenleme henüz mevcut değil`)
+        }
     }
 
     const handleSaveModule = async (moduleContent: any) => {
@@ -313,6 +609,8 @@ export default function PageEditor() {
             if (response.ok) {
                 toast.success("Modül başarıyla güncellendi")
                 await handleLanguageChange(currentLanguage)
+                setIsModuleModalOpen(false)
+                setEditingModule(null)
             } else {
                 const error = await response.json()
                 toast.error(error.message || "Modül güncellenirken hata oluştu")
@@ -323,13 +621,22 @@ export default function PageEditor() {
         }
     }
 
-    const handleDeleteModule = async (moduleId: string) => {
-        if (!currentLanguage) return
+    const handleDeleteModule = (moduleId: string) => {
+        const module = page?.modules?.find(m => m.id === moduleId)
+        const moduleInfo = MODULE_TYPES[module?.type as keyof typeof MODULE_TYPES]
 
-        if (!confirm("Bu modülü silmek istediğinizden emin misiniz?")) return
+        setDeleteConfirmation({
+            isOpen: true,
+            moduleId,
+            moduleName: moduleInfo?.name || module?.type || "Modül"
+        })
+    }
+
+    const confirmDeleteModule = async () => {
+        if (!deleteConfirmation.moduleId || !currentLanguage) return
 
         try {
-            const response = await fetch(`/api/admin/pages/${pageId}/modules/${moduleId}`, {
+            const response = await fetch(`/api/admin/pages/${pageId}/modules/${deleteConfirmation.moduleId}`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
@@ -349,6 +656,57 @@ export default function PageEditor() {
         } catch (error) {
             console.error("Error deleting module:", error)
             toast.error("Modül silinirken hata oluştu")
+        }
+    }
+
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event
+
+        if (!over || active.id === over.id) {
+            return
+        }
+
+        if (!page?.modules || !currentLanguage) return
+
+        const oldIndex = page.modules.findIndex((module) => module.id === active.id)
+        const newIndex = page.modules.findIndex((module) => module.id === over.id)
+
+        if (oldIndex === -1 || newIndex === -1) return
+
+        const newModules = arrayMove(page.modules, oldIndex, newIndex)
+
+        // Update order values
+        const updatedModules = newModules.map((module, index) => ({
+            ...module,
+            order: index
+        }))
+
+        // Optimistic update
+        setPage(prev => prev ? { ...prev, modules: updatedModules } : null)
+
+        try {
+            // Update order on server
+            const updatePromises = updatedModules.map((module) =>
+                fetch(`/api/admin/pages/${pageId}/modules/${module.id}`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        content: module.content,
+                        order: module.order,
+                        languageId: currentLanguage.id
+                    }),
+                })
+            )
+
+            await Promise.all(updatePromises)
+            toast.success("Modül sırası güncellendi")
+        } catch (error) {
+            console.error("Error updating module order:", error)
+            toast.error("Modül sırası güncellenirken hata oluştu")
+            // Revert optimistic update
+            await handleLanguageChange(currentLanguage)
         }
     }
 
@@ -377,91 +735,94 @@ export default function PageEditor() {
 
     return (
         <div className="h-screen flex flex-col">
-            {/* Header */}
+            {/* Header - Responsive iyileştirmesi */}
             <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div className="flex h-14 items-center justify-between px-6">
-                    <div className="flex items-center space-x-4">
+                <div className="flex h-14 items-center px-3 lg:px-6">
+                    <div className="flex items-center space-x-2 lg:space-x-4 flex-1 min-w-0">
                         <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => router.push("/admin/pages")}
+                            className="shrink-0"
                         >
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Geri
+                            <ArrowLeft className="mr-1 lg:mr-2 h-4 w-4" />
+                            <span className="hidden sm:inline">Geri</span>
                         </Button>
-                        <div>
-                            <h1 className="text-lg font-semibold">{page.title}</h1>
-                            <p className="text-sm text-muted-foreground">
-                                Sayfa Düzenleme
-                            </p>
+                        <div className="flex items-center space-x-2 min-w-0">
+                            <h1 className="text-base lg:text-lg font-semibold truncate">Sayfa Düzenle</h1>
+                            {currentLanguage && (
+                                <Badge variant="outline" className="hidden sm:flex items-center space-x-1 shrink-0">
+                                    <ReactCountryFlag
+                                        countryCode={currentLanguage.flag}
+                                        svg
+                                        style={{
+                                            width: '1em',
+                                            height: '1em',
+                                        }}
+                                    />
+                                    <span className="hidden md:inline">{currentLanguage.name}</span>
+                                </Badge>
+                            )}
                         </div>
                     </div>
 
-                    <div className="flex items-center space-x-4">
-                        <Select
-                            value={currentLanguage?.id}
-                            onValueChange={async (value) => {
-                                const language = languages.find(lang => lang.id === value)
-                                if (language) await handleLanguageChange(language)
-                            }}
-                        >
-                            <SelectTrigger className="w-40">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {Array.isArray(languages) && languages.map((language) => (
-                                    <SelectItem key={language.id} value={language.id}>
-                                        <div className="flex items-center space-x-2">
-                                            <ReactCountryFlag
-                                                countryCode={language.flag}
-                                                svg
-                                                style={{
-                                                    width: '1em',
-                                                    height: '1em',
-                                                }}
-                                            />
-                                            <span>{language.name}</span>
-                                            {language.isDefault && (
-                                                <span className="text-xs text-muted-foreground">(Varsayılan)</span>
-                                            )}
-                                        </div>
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                        <Badge variant={page.isActive ? "default" : "secondary"}>
-                            {page.isActive ? "Aktif" : "Pasif"}
-                        </Badge>
-                        <Button variant="outline" size="sm">
-                            <Eye className="mr-2 h-4 w-4" />
-                            Önizle
-                        </Button>
+                    <div className="flex items-center space-x-1 lg:space-x-2 shrink-0">
+                        {languages.length > 0 && (
+                            <Select
+                                value={currentLanguage?.id || ""}
+                                onValueChange={(value) => {
+                                    const language = languages.find(lang => lang.id === value)
+                                    if (language) {
+                                        handleLanguageChange(language)
+                                    }
+                                }}
+                            >
+                                <SelectTrigger className="w-[100px] lg:w-[140px]">
+                                    <SelectValue placeholder="Dil" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {languages.map((language) => (
+                                        <SelectItem key={language.id} value={language.id}>
+                                            <div className="flex items-center space-x-2">
+                                                <ReactCountryFlag
+                                                    countryCode={language.flag}
+                                                    svg
+                                                    style={{
+                                                        width: '1em',
+                                                        height: '1em',
+                                                    }}
+                                                />
+                                                <span>{language.name}</span>
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
                         <Button onClick={handleSave} disabled={saving} size="sm">
-                            <Save className="mr-2 h-4 w-4" />
-                            {saving ? "Kaydediliyor..." : "Kaydet"}
+                            <Save className="mr-1 lg:mr-2 h-4 w-4" />
+                            <span className="hidden sm:inline">{saving ? "Kaydediliyor..." : "Kaydet"}</span>
                         </Button>
                     </div>
                 </div>
             </div>
 
-            <div className="flex h-[calc(100vh-3.5rem)]">
+            {/* Mobile/Desktop Layout */}
+            <div className="flex flex-1 overflow-hidden">
                 {/* Main Content - Page Preview */}
                 <div className="flex-1 overflow-auto">
-                    <div className="p-6">
+                    <div className="p-3 lg:p-6">
                         {/* Page Settings */}
-                        <Card className="mb-6">
-                            <CardHeader>
-                                <CardTitle className="flex items-center">
-                                    <Settings className="mr-2 h-5 w-5" />
+                        <Card className="mb-4 lg:mb-6">
+                            <CardHeader className="pb-3 lg:pb-6">
+                                <CardTitle className="flex items-center text-base lg:text-lg">
+                                    <Settings className="mr-2 h-4 lg:h-5 w-4 lg:w-5" />
                                     Sayfa Ayarları
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="title">Sayfa Başlığı</Label>
                                             <Input
@@ -490,7 +851,7 @@ export default function PageEditor() {
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="seoTitle">SEO Başlığı</Label>
                                             <Input
@@ -524,10 +885,10 @@ export default function PageEditor() {
 
                         {/* Page Modules */}
                         <Card>
-                            <CardHeader>
-                                <CardTitle>Sayfa Modülleri</CardTitle>
+                            <CardHeader className="pb-3 lg:pb-6">
+                                <CardTitle className="text-base lg:text-lg">Sayfa Modülleri</CardTitle>
                                 <CardDescription>
-                                    Sayfanızın içeriğini oluşturan modüller
+                                    Sayfanızın içeriğini oluşturan modüller. Sürükleyip bırakarak sıralayabilirsiniz.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
@@ -538,58 +899,86 @@ export default function PageEditor() {
                                         <p className="text-sm">Sağ panelden modül ekleyebilirsiniz</p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-4">
-                                        {page.modules
-                                            .sort((a, b) => a.order - b.order)
-                                            .map((module) => (
-                                                <Card key={module.id} className="border-l-4 border-l-primary">
-                                                    <CardContent className="p-4">
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="flex items-center space-x-3">
-                                                                <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
-                                                                <div>
-                                                                    <h4 className="font-medium">{module.type}</h4>
-                                                                    <p className="text-sm text-muted-foreground">
-                                                                        Sıra: {module.order + 1}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex items-center space-x-2">
-                                                                <Badge variant={module.isActive ? "default" : "secondary"}>
-                                                                    {module.isActive ? "Aktif" : "Pasif"}
-                                                                </Badge>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => handleEditModule(module)}
-                                                                >
-                                                                    <Edit className="h-4 w-4" />
-                                                                </Button>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => handleDeleteModule(module.id)}
-                                                                >
-                                                                    <Trash2 className="h-4 w-4" />
-                                                                </Button>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="mt-2 text-sm text-muted-foreground">
-                                                            Sıra: {module.order + 1}
-                                                        </div>
-                                                    </CardContent>
-                                                </Card>
-                                            ))}
-                                    </div>
+                                    <DndContext
+                                        sensors={sensors}
+                                        collisionDetection={closestCenter}
+                                        onDragEnd={handleDragEnd}
+                                    >
+                                        <SortableContext
+                                            items={page.modules.map(m => m.id)}
+                                            strategy={verticalListSortingStrategy}
+                                        >
+                                            <div className="space-y-4">
+                                                {page.modules
+                                                    .sort((a, b) => a.order - b.order)
+                                                    .map((module) => (
+                                                        <SortableModuleItem
+                                                            key={module.id}
+                                                            module={module}
+                                                            onEdit={handleEditModule}
+                                                            onDelete={handleDeleteModule}
+                                                        />
+                                                    ))}
+                                            </div>
+                                        </SortableContext>
+                                    </DndContext>
                                 )}
                             </CardContent>
                         </Card>
+
+                        {/* Mobile Module Panel - Sadece mobile'da görünür */}
+                        <div className="lg:hidden mt-4">
+                            <Card>
+                                <CardHeader className="pb-3">
+                                    <CardTitle className="flex items-center justify-between text-base">
+                                        <span>Modül Ekle</span>
+                                        <Badge variant="outline">{Array.isArray(page.modules) ? page.modules.length : 0} modül</Badge>
+                                    </CardTitle>
+                                    {currentLanguage && (
+                                        <CardDescription className="flex items-center space-x-2">
+                                            <ReactCountryFlag
+                                                countryCode={currentLanguage.flag}
+                                                svg
+                                                style={{
+                                                    width: '1em',
+                                                    height: '1em',
+                                                }}
+                                            />
+                                            <span className="font-medium">{currentLanguage.name}</span>
+                                            <span className="text-muted-foreground">dili için modül ekle</span>
+                                        </CardDescription>
+                                    )}
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        {Object.entries(MODULE_TYPES).map(([type, info]) => {
+                                            const IconComponent = info.icon
+                                            return (
+                                                <Button
+                                                    key={type}
+                                                    variant="outline"
+                                                    className="justify-start h-auto p-3"
+                                                    onClick={() => addModule(type)}
+                                                >
+                                                    <div className="flex items-start space-x-3">
+                                                        <IconComponent className="h-4 w-4 mt-0.5 text-primary" />
+                                                        <div className="text-left">
+                                                            <div className="font-medium text-sm">{info.name}</div>
+                                                            <div className="text-xs text-muted-foreground">{info.description}</div>
+                                                        </div>
+                                                    </div>
+                                                </Button>
+                                            )
+                                        })}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
                     </div>
                 </div>
 
-                {/* Right Sidebar - Module Panel */}
-                <div className="w-80 border-l bg-muted/30 overflow-auto">
+                {/* Right Sidebar - Desktop'ta görünür */}
+                <div className="hidden lg:block w-80 border-l bg-muted/30 overflow-auto">
                     <div className="p-4">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold">Modüller</h3>
@@ -614,28 +1003,53 @@ export default function PageEditor() {
                         )}
 
                         <div className="space-y-2">
-                            <Button
-                                variant="outline"
-                                className="w-full justify-start"
-                                onClick={() => addModule("TEXT_IMAGE")}
-                            >
-                                <Plus className="mr-2 h-4 w-4" />
-                                Metin + Resim
-                            </Button>
+                            {Object.entries(MODULE_TYPES).map(([type, info]) => {
+                                const IconComponent = info.icon
+                                return (
+                                    <Button
+                                        key={type}
+                                        variant="outline"
+                                        className="w-full justify-start h-auto p-3"
+                                        onClick={() => addModule(type)}
+                                    >
+                                        <div className="flex items-start space-x-3">
+                                            <IconComponent className="h-4 w-4 mt-0.5 text-primary" />
+                                            <div className="text-left">
+                                                <div className="font-medium">{info.name}</div>
+                                                <div className="text-xs text-muted-foreground">{info.description}</div>
+                                            </div>
+                                        </div>
+                                    </Button>
+                                )
+                            })}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Text Image Modal */}
-            <TextImageModal
-                isOpen={isModuleModalOpen}
-                onClose={() => {
-                    setIsModuleModalOpen(false)
-                    setEditingModule(null)
-                }}
-                onSave={handleSaveModule}
-                initialContent={editingModule?.content}
+            {/* Text Image Modal - Sadece TEXT_IMAGE için */}
+            {editingModule?.type === "TEXT_IMAGE" && (
+                <TextImageModal
+                    isOpen={isModuleModalOpen}
+                    onClose={() => {
+                        setIsModuleModalOpen(false)
+                        setEditingModule(null)
+                    }}
+                    onSave={handleSaveModule}
+                    initialContent={editingModule?.content}
+                />
+            )}
+
+            {/* Delete Confirmation Dialog */}
+            <ConfirmationDialog
+                isOpen={deleteConfirmation.isOpen}
+                onClose={() => setDeleteConfirmation({ isOpen: false, moduleId: null, moduleName: "" })}
+                onConfirm={confirmDeleteModule}
+                title="Modülü Sil"
+                description={`"${deleteConfirmation.moduleName}" modülünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+                confirmText="Sil"
+                cancelText="İptal"
+                variant="destructive"
             />
         </div>
     )

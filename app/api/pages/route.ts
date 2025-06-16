@@ -211,6 +211,7 @@ export async function POST(request: NextRequest) {
                         languageId,
                         title,
                         description,
+                        slug: `${slug}-${language.code}`,
                         seoTitle,
                         seoDescription
                     },
