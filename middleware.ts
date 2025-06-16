@@ -95,6 +95,7 @@ export async function middleware(request: NextRequest) {
         pathname.startsWith('/admin') ||
         pathname.startsWith('/_next/') ||
         pathname.startsWith('/favicon.ico') ||
+        pathname.startsWith('/images/') ||  // Bu satırı ekleyin
         pathname.includes('.')
     ) {
         return NextResponse.next()
@@ -148,7 +149,8 @@ export const config = {
          * - _next/static (static files)
          * - _next/image (image optimization files)
          * - favicon.ico (favicon file)
+         * - images (static images)
          */
-        '/((?!api|_next/static|_next/image|favicon.ico).*)',
+        '/((?!api|_next/static|_next/image|favicon.ico|images).*)',
     ],
-} 
+}

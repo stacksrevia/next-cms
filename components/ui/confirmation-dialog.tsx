@@ -10,35 +10,37 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Loader2 } from "lucide-react"
 
 interface ConfirmationDialogProps {
-    isOpen: boolean
-    onClose: () => void
-    onConfirm: () => void
+    open: boolean
+    onOpenChange: (open: boolean) => void
     title: string
     description: string
     confirmText?: string
     cancelText?: string
+    onConfirm: () => void | Promise<void>
+    loading?: boolean
     variant?: "default" | "destructive"
 }
 
 export function ConfirmationDialog({
-    isOpen,
-    onClose,
-    onConfirm,
+    open,
+    onOpenChange,
     title,
     description,
     confirmText = "Onayla",
     cancelText = "İptal",
+    onConfirm,
+    loading = false,
     variant = "default"
 }: ConfirmationDialogProps) {
-    const handleConfirm = () => {
-        onConfirm()
-        onClose()
+    const handleConfirm = async () => {
+        await onConfirm()
     }
 
     return (
-        <AlertDialog open={isOpen} onOpenChange={onClose}>
+        <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>{title}</AlertDialogTitle>
@@ -47,13 +49,15 @@ export function ConfirmationDialog({
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel onClick={onClose}>
+                    <AlertDialogCancel disabled={loading}>
                         {cancelText}
                     </AlertDialogCancel>
                     <AlertDialogAction
                         onClick={handleConfirm}
+                        disabled={loading}
                         className={variant === "destructive" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
                     >
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {confirmText}
                     </AlertDialogAction>
                 </AlertDialogFooter>

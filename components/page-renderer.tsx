@@ -1,4 +1,4 @@
-import { ServerNavbar } from "@/components/server-navbar"
+import { NavbarWrapper } from "@/components/navbar-wrapper"
 import { ModuleRenderer } from "@/components/module-renderer"
 import { prisma } from "@/lib/prisma"
 
@@ -80,7 +80,7 @@ export async function PageRenderer({ page, language, languageCode }: PageRendere
             )}
 
             <div className="min-h-screen">
-                <ServerNavbar currentLanguage={currentLanguage} />
+                <NavbarWrapper currentLanguage={currentLanguage} />
 
                 <main>
                     {/* Page Content */}

@@ -66,11 +66,26 @@ export function CreatePageDialog({
     })
 
     const generateSlug = (title: string) => {
+        // Türkçe karakterleri İngilizce karşılıklarına çevir
+        const turkishMap: { [key: string]: string } = {
+            'ç': 'c', 'Ç': 'C',
+            'ğ': 'g', 'Ğ': 'G',
+            'ı': 'i', 'I': 'I',
+            'İ': 'I', 'i': 'i',
+            'ö': 'o', 'Ö': 'O',
+            'ş': 's', 'Ş': 'S',
+            'ü': 'u', 'Ü': 'U'
+        }
+
         return title
+            .split('')
+            .map(char => turkishMap[char] || char)
+            .join('')
             .toLowerCase()
-            .replace(/[^a-z0-9\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-')
+            .replace(/[^a-z0-9\s-]/g, '') // Sadece harf, rakam, boşluk ve tire
+            .replace(/\s+/g, '-') // Boşlukları tire yap
+            .replace(/-+/g, '-') // Çoklu tireleri tek tire yap
+            .replace(/^-+|-+$/g, '') // Başındaki ve sonundaki tireleri kaldır
             .trim()
     }
 

@@ -776,17 +776,17 @@ h6 {
 }
 
 /* Navbar - Menü Arkaplan ve Yazı Rengi */
-navbar {
+nav.viraNavbar {
   background-color: var(--vira-menu-background-color, transparent);
   color: var(--vira-menu-text-color, inherit);
 }
 
-navbar * {
+nav.viraNavbar * {
   color: var(--vira-menu-text-color, inherit);
 }
 
 /* Navbar linklerin altındaki after rengi */
-navbar a::after {
+nav.viraNavbar a::after {
   background-color: var(--vira-site-main-color, #007bff);
 }
 

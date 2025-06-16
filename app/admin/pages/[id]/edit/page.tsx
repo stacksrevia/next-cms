@@ -1120,8 +1120,8 @@ export default function PageEditor() {
 
             {/* Delete Confirmation Dialog */}
             <ConfirmationDialog
-                isOpen={deleteConfirmation.isOpen}
-                onClose={() => setDeleteConfirmation({ isOpen: false, moduleId: null, moduleName: "" })}
+                open={deleteConfirmation.isOpen}
+                onOpenChange={(open) => setDeleteConfirmation({ isOpen: open, moduleId: null, moduleName: "" })}
                 onConfirm={confirmDeleteModule}
                 title="Modülü Sil"
                 description={`"${deleteConfirmation.moduleName}" modülünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}

@@ -27,6 +27,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { CreatePageDialog } from "@/components/admin/create-page-dialog"
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { toast } from "sonner"
 import ReactCountryFlag from 'react-country-flag'
 import {
@@ -254,6 +255,17 @@ export default function PagesManagement() {
     const [searchTerm, setSearchTerm] = useState("")
     const [expandedPages, setExpandedPages] = useState<Set<string>>(new Set())
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+    const [deleteDialog, setDeleteDialog] = useState<{
+        open: boolean
+        pageId: string | null
+        pageTitle: string
+        loading: boolean
+    }>({
+        open: false,
+        pageId: null,
+        pageTitle: "",
+        loading: false
+    })
 
     // Drag and drop sensors
     const sensors = useSensors(
@@ -430,7 +442,7 @@ export default function PagesManagement() {
         }
     }
 
-    const deletePage = async (pageId: string) => {
+    const handleDeleteClick = (pageId: string) => {
         const page = pages.find(p => p.id === pageId)
         const hasChildren = page?.children && page.children.length > 0
 
@@ -439,23 +451,42 @@ export default function PagesManagement() {
             return
         }
 
-        if (!confirm("Bu sayfayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
-            return
-        }
+        if (!page) return
+
+        setDeleteDialog({
+            open: true,
+            pageId: pageId,
+            pageTitle: page.title,
+            loading: false
+        })
+    }
+
+    const deletePage = async () => {
+        if (!deleteDialog.pageId) return
+
+        setDeleteDialog(prev => ({ ...prev, loading: true }))
 
         try {
-            const response = await fetch(`/api/admin/pages/${pageId}`, {
+            const response = await fetch(`/api/admin/pages/${deleteDialog.pageId}`, {
                 method: "DELETE",
             })
 
             if (response.ok) {
                 await fetchPages()
                 toast.success("Sayfa silindi")
+                setDeleteDialog({
+                    open: false,
+                    pageId: null,
+                    pageTitle: "",
+                    loading: false
+                })
             } else {
                 toast.error("Sayfa silinirken hata oluştu")
+                setDeleteDialog(prev => ({ ...prev, loading: false }))
             }
         } catch {
             toast.error("Sayfa silinirken hata oluştu")
+            setDeleteDialog(prev => ({ ...prev, loading: false }))
         }
     }
 
@@ -610,7 +641,7 @@ export default function PagesManagement() {
                                                 page={page}
                                                 onToggleStatus={togglePageStatus}
                                                 onEdit={handleEdit}
-                                                onDelete={deletePage}
+                                                onDelete={handleDeleteClick}
                                                 renderPageTitle={renderPageTitle}
                                             />
                                         ))}
@@ -629,6 +660,19 @@ export default function PagesManagement() {
                 onPageCreated={handlePageCreated}
                 languages={languages}
                 pages={pages}
+            />
+
+            {/* Delete Confirmation Dialog */}
+            <ConfirmationDialog
+                open={deleteDialog.open}
+                onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}
+                title="Sayfayı Sil"
+                description={`"${deleteDialog.pageTitle}" sayfasını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve sayfa tüm dillerdeki içerikleriyle birlikte silinecektir.`}
+                confirmText="Sil"
+                cancelText="İptal"
+                onConfirm={deletePage}
+                loading={deleteDialog.loading}
+                variant="destructive"
             />
         </div>
     )

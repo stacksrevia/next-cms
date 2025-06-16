@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Edit, Trash2, Globe, Flag } from "lucide-react"
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { toast } from "sonner"
 import ReactCountryFlag from "react-country-flag"
 
@@ -66,6 +67,17 @@ export default function LanguagesManagement() {
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
     const [editingLanguage, setEditingLanguage] = useState<Language | null>(null)
+    const [deleteDialog, setDeleteDialog] = useState<{
+        open: boolean
+        languageId: string | null
+        languageName: string
+        loading: boolean
+    }>({
+        open: false,
+        languageId: null,
+        languageName: "",
+        loading: false
+    })
     const [formData, setFormData] = useState({
         code: '',
         name: '',
@@ -158,25 +170,42 @@ export default function LanguagesManagement() {
         setIsEditDialogOpen(true)
     }
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Bu dili silmek istediğinizden emin misiniz?')) {
-            return
-        }
+    const handleDeleteClick = (language: Language) => {
+        setDeleteDialog({
+            open: true,
+            languageId: language.id,
+            languageName: language.name,
+            loading: false
+        })
+    }
+
+    const handleDelete = async () => {
+        if (!deleteDialog.languageId) return
+
+        setDeleteDialog(prev => ({ ...prev, loading: true }))
 
         try {
-            const response = await fetch(`/api/admin/languages/${id}`, {
+            const response = await fetch(`/api/admin/languages/${deleteDialog.languageId}`, {
                 method: 'DELETE',
             })
 
             if (response.ok) {
                 toast.success('Dil silindi')
                 fetchLanguages()
+                setDeleteDialog({
+                    open: false,
+                    languageId: null,
+                    languageName: "",
+                    loading: false
+                })
             } else {
                 const error = await response.json()
                 toast.error(error.error || 'Dil silinirken hata oluştu')
+                setDeleteDialog(prev => ({ ...prev, loading: false }))
             }
         } catch {
             toast.error('Dil silinirken hata oluştu')
+            setDeleteDialog(prev => ({ ...prev, loading: false }))
         }
     }
 
@@ -510,7 +539,7 @@ export default function LanguagesManagement() {
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        onClick={() => handleDelete(language.id)}
+                                                        onClick={() => handleDeleteClick(language)}
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
@@ -636,6 +665,19 @@ export default function LanguagesManagement() {
                     </form>
                 </DialogContent>
             </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <ConfirmationDialog
+                open={deleteDialog.open}
+                onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}
+                title="Dili Sil"
+                description={`"${deleteDialog.languageName}" dilini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve bu dildeki tüm içerikler silinecektir.`}
+                confirmText="Sil"
+                cancelText="İptal"
+                onConfirm={handleDelete}
+                loading={deleteDialog.loading}
+                variant="destructive"
+            />
         </div>
     )
 } 
