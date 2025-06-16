@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useCallback, memo } from "react"
+import { createPortal } from "react-dom"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -40,8 +41,8 @@ export const CustomModal = memo(function CustomModal({ isOpen, onClose, title, c
 
     if (!isOpen) return null
 
-    return (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center">
+    const modalContent = (
+        <div className="fixed inset-0 z-[10] flex items-center justify-center">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -49,7 +50,7 @@ export const CustomModal = memo(function CustomModal({ isOpen, onClose, title, c
             />
 
             {/* Modal */}
-            <div className="relative bg-background border rounded-lg shadow-2xl w-[90vw] h-[90vh] flex flex-col max-w-7xl">
+            <div className="relative bg-background border rounded-lg shadow-2xl w-[90vw] h-[90vh] flex flex-col max-w-7xl z-[1000000]">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b shrink-0">
                     <h2 className="text-lg font-semibold">{title}</h2>
@@ -70,4 +71,7 @@ export const CustomModal = memo(function CustomModal({ isOpen, onClose, title, c
             </div>
         </div>
     )
+
+    // Portal kullanarak body'ye render et
+    return typeof window !== 'undefined' ? createPortal(modalContent, document.body) : null
 }) 

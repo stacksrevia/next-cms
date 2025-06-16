@@ -48,6 +48,7 @@ import {
 import { toast } from "sonner"
 import ReactCountryFlag from 'react-country-flag'
 import { TextImageModal } from "@/components/admin/text-image-modal"
+import { SliderModal } from "@/components/admin/slider-modal"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import {
     DndContext,
@@ -246,11 +247,16 @@ function SortableModuleItem({ module, onEdit, onDelete }: {
                             <div>
                                 <h4 className="font-medium">
                                     {moduleInfo?.name || module.type}
-                                    {module.content?.title && typeof module.content.title === 'string' && module.content.title.trim() && (
-                                        <span className="text-muted-foreground font-normal">
-                                            {" - "}{module.content.title}
-                                        </span>
-                                    )}
+                                    {(() => {
+                                        const title = module.content?.title;
+                                        return title &&
+                                            typeof title === 'string' &&
+                                            title.trim() ? (
+                                            <span className="text-muted-foreground font-normal">
+                                                {" - "}{title}
+                                            </span>
+                                        ) : null;
+                                    })()}
                                 </h4>
                                 <p className="text-sm text-muted-foreground">
                                     {moduleInfo?.description || "Modül açıklaması"}
@@ -507,8 +513,67 @@ export default function PageEditor() {
                 }
             case "SLIDER":
                 return {
-                    title: "Slider Başlığı",
-                    slides: []
+                    sliderType: "horizontal",
+                    loop: false,
+                    autoplay: false,
+                    navigation: true,
+                    animatedArrows: false,
+                    pagination: true,
+                    slidesPerView: 1,
+                    isActive: true,
+                    videoDelay: 3300,
+                    autoplayDelay: 2500,
+                    speed: 1000,
+                    titleSize: "32px",
+                    paragraphSize: "14px",
+                    margin: "",
+                    height: "85vh",
+                    effect: "",
+                    uniqueId: `vira-slider-${Date.now()}`,
+                    slides: [
+                        {
+                            id: "slide-1",
+                            type: "image",
+                            imageUrl: "https://via.placeholder.com/1920x1080/4f46e5/ffffff?text=Slide+1",
+                            videoUrl: "",
+                            title: "Test Slide 1",
+                            titleType: "h1",
+                            content: "<p>Bu bir test slide'ıdır. Slider'ın çalışıp çalışmadığını kontrol etmek için oluşturulmuştur.</p>",
+                            button1Text: "Buton 1",
+                            button1Link: "#",
+                            button2Text: "Buton 2",
+                            button2Link: "#",
+                            button3Text: "",
+                            button3Link: "",
+                            filigranColor: "#000000",
+                            textColor: "#ffffff",
+                            opacity: 0.5,
+                            contentPosition: "left",
+                            isActive: true,
+                            order: 1
+                        },
+                        {
+                            id: "slide-2",
+                            type: "image",
+                            imageUrl: "https://via.placeholder.com/1920x1080/dc2626/ffffff?text=Slide+2",
+                            videoUrl: "",
+                            title: "Test Slide 2",
+                            titleType: "h1",
+                            content: "<p>İkinci test slide'ı. Slider geçişlerini test etmek için kullanılır.</p>",
+                            button1Text: "Test Butonu",
+                            button1Link: "#",
+                            button2Text: "",
+                            button2Link: "",
+                            button3Text: "",
+                            button3Link: "",
+                            filigranColor: "#000000",
+                            textColor: "#ffffff",
+                            opacity: 0.4,
+                            contentPosition: "center",
+                            isActive: true,
+                            order: 2
+                        }
+                    ]
                 }
             case "CONTACT_FORM":
                 return {
@@ -581,8 +646,8 @@ export default function PageEditor() {
     }
 
     const handleEditModule = (module: Module) => {
-        // Sadece TEXT_IMAGE modülü için modal aç
-        if (module.type === "TEXT_IMAGE") {
+        // TEXT_IMAGE ve SLIDER modülleri için modal aç
+        if (module.type === "TEXT_IMAGE" || module.type === "SLIDER") {
             setEditingModule(module)
             setIsModuleModalOpen(true)
         } else {
@@ -1027,9 +1092,22 @@ export default function PageEditor() {
                 </div>
             </div>
 
-            {/* Text Image Modal - Sadece TEXT_IMAGE için */}
+            {/* Text Image Modal - TEXT_IMAGE için */}
             {editingModule?.type === "TEXT_IMAGE" && (
                 <TextImageModal
+                    isOpen={isModuleModalOpen}
+                    onClose={() => {
+                        setIsModuleModalOpen(false)
+                        setEditingModule(null)
+                    }}
+                    onSave={handleSaveModule}
+                    initialContent={editingModule?.content}
+                />
+            )}
+
+            {/* Slider Modal - SLIDER için */}
+            {editingModule?.type === "SLIDER" && (
+                <SliderModal
                     isOpen={isModuleModalOpen}
                     onClose={() => {
                         setIsModuleModalOpen(false)

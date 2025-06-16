@@ -12,7 +12,9 @@ import {
     FileText,
     BarChart3,
     Globe,
-    Palette
+    Palette,
+    Image,
+    ImageIcon
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -42,6 +44,16 @@ const menuItems = [
         title: "Sayfa Yönetimi",
         icon: FileText,
         href: "/admin/pages",
+    },
+    {
+        title: "Görseller",
+        icon: Image,
+        href: "/admin/images",
+    },
+    {
+        title: "Logo Yönetimi",
+        icon: ImageIcon,
+        href: "/admin/logos",
     },
     {
         title: "Dil Yönetimi",

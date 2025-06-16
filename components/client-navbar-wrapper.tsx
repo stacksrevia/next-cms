@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { ChevronDown, Menu, X, Globe, Loader2 } from "lucide-react"
 import ReactCountryFlag from 'react-country-flag'
 import styles from "@/styles/vira-navbar.module.css"
+import { DesignData } from '@/lib/design-utils'
 
 interface NavPage {
     id: string
@@ -28,9 +29,11 @@ interface Language {
 interface ClientNavbarWrapperProps {
     pages: NavPage[]
     currentLanguage: Language | null
+    logo: string | null
+    designData: DesignData | null
 }
 
-export function ClientNavbarWrapper({ pages, currentLanguage }: ClientNavbarWrapperProps) {
+export function ClientNavbarWrapper({ pages, currentLanguage, logo, designData }: ClientNavbarWrapperProps) {
     const pathname = usePathname()
     const router = useRouter()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -41,6 +44,9 @@ export function ClientNavbarWrapper({ pages, currentLanguage }: ClientNavbarWrap
     const [dropdownTimeout, setDropdownTimeout] = useState<NodeJS.Timeout | null>(null)
     const [pageDropdownTimeouts, setPageDropdownTimeouts] = useState<Map<string, NodeJS.Timeout>>(new Map())
     const [isChangingLanguage, setIsChangingLanguage] = useState(false)
+
+    // Site ana rengini al
+    const siteMainColor = designData?.siteBackgroundColor || '#007bff'
 
     // Dilleri getir
     useEffect(() => {
@@ -351,12 +357,26 @@ export function ClientNavbarWrapper({ pages, currentLanguage }: ClientNavbarWrap
     }
 
     return (
-        <nav className={`${styles.viraNavbar} ${isScrolled ? styles.viraNavbarScrolled : ''}`}>
+        <nav
+            className={`${styles.viraNavbar} ${isScrolled ? styles.viraNavbarScrolled : ''}`}
+            style={{
+                '--vira-site-main-color': siteMainColor,
+                '--navbar-height': '70px'
+            } as React.CSSProperties}
+        >
             <div className={styles.viraNavbarContainer}>
                 {/* Logo */}
                 <div className={styles.viraNavbarLogo}>
                     <Link href={`/${currentLanguage?.code || 'tr'}`}>
-                        <span className={styles.viraNavbarLogoText}>VIRA</span>
+                        {logo ? (
+                            <img
+                                src={logo}
+                                alt="Logo"
+                                className={styles.viraNavbarLogoImage}
+                            />
+                        ) : (
+                            <span className={styles.viraNavbarLogoText}>VIRA</span>
+                        )}
                     </Link>
                 </div>
 
@@ -439,10 +459,19 @@ export function ClientNavbarWrapper({ pages, currentLanguage }: ClientNavbarWrap
                     className={styles.viraNavbarMobileToggle}
                     onClick={toggleMobileMenu}
                     aria-label="Toggle mobile menu"
+                    data-open={isMobileMenuOpen}
                 >
                     {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                 </button>
             </div>
+
+            {/* Mobile Menu Overlay */}
+            {isMobileMenuOpen && (
+                <div
+                    className={styles.viraNavbarOverlay}
+                    onClick={closeMobileMenu}
+                />
+            )}
 
             {/* Mobile Menu */}
             <div className={`${styles.viraNavbarMobile} ${isMobileMenuOpen ? styles.viraNavbarMobileOpen : ''}`}>

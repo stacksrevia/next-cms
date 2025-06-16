@@ -112,3 +112,466 @@
         font-size: 3rem;
     }
 }
+
+/* Slider Module Styles - Updated for Pure CSS Implementation */
+.pageSliderContent {
+    position: relative;
+    width: 100%;
+    min-height: 500px;
+    overflow: hidden;
+}
+
+.pageSliderContent .swiper {
+    width: 100%;
+    height: 100%;
+    min-height: 500px;
+}
+
+.pageSliderContent .swiper-slide {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 500px;
+    height: 100% !important;
+    width: 100%;
+}
+
+.pageSliderContent .swiper-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+.pageSliderContent .container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    min-height: 500px;
+}
+
+.pageSliderContent .slider-contents {
+    position: relative;
+    z-index: 4;
+    width: 100%;
+}
+
+.pageSliderContent .vira-slider-tag {
+    font-size: var(--title-size, 32px);
+    font-weight: bold;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.pageSliderContent .slider-description {
+    font-size: var(--paragraph-size, 14px);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.pageSliderContent .vira-slider-buttons {
+    margin-top: 1rem;
+}
+
+.pageSliderContent .btn {
+    display: inline-block;
+    padding: 12px 24px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    border: 2px solid transparent;
+}
+
+.pageSliderContent .btn-color {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.pageSliderContent .btn-color:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+.pageSliderContent .btn-outline {
+    background-color: transparent;
+    color: white;
+    border-color: white;
+}
+
+.pageSliderContent .btn-outline:hover {
+    background-color: white;
+    color: #333;
+}
+
+.pageSliderContent .btn-ghost {
+    background-color: transparent;
+    color: white;
+    border-color: transparent;
+}
+
+.pageSliderContent .btn-ghost:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Custom Navigation Arrows */
+.pageSliderContent .swiper-button-prev,
+.pageSliderContent .swiper-button-next {
+    width: 50px;
+    height: 50px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: white;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.pageSliderContent .swiper-button-prev:hover,
+.pageSliderContent .swiper-button-next:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.pageSliderContent .swiper-button-prev::after,
+.pageSliderContent .swiper-button-next::after {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* Animated Arrows */
+.pageSliderContent .animated-arrow {
+    animation: arrowPulse 2s infinite;
+}
+
+@keyframes arrowPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+}
+
+/* Custom Pagination */
+.pageSliderContent .swiper-pagination {
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+}
+
+.pageSliderContent .swiper-pagination-bullet {
+    width: 12px;
+    height: 12px;
+    background-color: rgba(255, 255, 255, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    opacity: 1;
+    transition: all 0.3s ease;
+    margin: 0 4px;
+}
+
+.pageSliderContent .swiper-pagination-bullet-active {
+    background-color: white;
+    transform: scale(1.2);
+}
+
+/* Vertical Slider */
+.pageSliderContent .swiper-vertical {
+    flex-direction: column;
+    height: 100% !important;
+    min-height: 500px;
+}
+
+.pageSliderContent .swiper-vertical .swiper-slide {
+    height: 100% !important;
+    min-height: 500px;
+}
+
+/* Vertical Slider - Complete Override */
+.pageSliderContent .swiper-vertical {
+    position: relative !important;
+}
+
+/* Vertical Slider Container - Safe Zone */
+.pageSliderContent .swiper-vertical .container {
+    padding: 100px 20px !important;
+    max-width: calc(100% - 40px) !important;
+    margin: 0 auto !important;
+    position: relative !important;
+    z-index: 5 !important;
+}
+
+/* ULTIMATE OVERRIDE - Vertical Navigation Buttons */
+div.pageSliderContent div.swiper-vertical div.swiper-button-prev,
+div.pageSliderContent div.swiper-vertical div.swiper-button-next,
+.pageSliderContent .swiper-vertical .swiper-button-prev,
+.pageSliderContent .swiper-vertical .swiper-button-next {
+    position: absolute !important;
+    left: 50% !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    transform: translateX(-50%) !important;
+    width: 50px !important;
+    height: 50px !important;
+    margin: 0 !important;
+    z-index: 15 !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 50% !important;
+    color: white !important;
+    transition: all 0.3s ease !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Vertical Prev Button - TOP */
+div.pageSliderContent div.swiper-vertical div.swiper-button-prev,
+.pageSliderContent .swiper-vertical .swiper-button-prev {
+    top: 30px !important;
+    bottom: auto !important;
+}
+
+/* Vertical Next Button - BOTTOM */
+div.pageSliderContent div.swiper-vertical div.swiper-button-next,
+.pageSliderContent .swiper-vertical .swiper-button-next {
+    top: auto !important;
+    bottom: 30px !important;
+}
+
+/* Vertical Button Icons - Custom Arrows */
+div.pageSliderContent div.swiper-vertical div.swiper-button-prev::after,
+.pageSliderContent .swiper-vertical .swiper-button-prev::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 0 !important;
+    height: 0 !important;
+    border-left: 8px solid transparent !important;
+    border-right: 8px solid transparent !important;
+    border-bottom: 12px solid white !important;
+    border-top: none !important;
+    font-size: 0 !important;
+    margin: 0 !important;
+}
+
+div.pageSliderContent div.swiper-vertical div.swiper-button-next::after,
+.pageSliderContent .swiper-vertical .swiper-button-next::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 0 !important;
+    height: 0 !important;
+    border-left: 8px solid transparent !important;
+    border-right: 8px solid transparent !important;
+    border-top: 12px solid white !important;
+    border-bottom: none !important;
+    font-size: 0 !important;
+    margin: 0 !important;
+}
+
+/* Vertical Button Hover Effects */
+div.pageSliderContent div.swiper-vertical div.swiper-button-prev:hover,
+div.pageSliderContent div.swiper-vertical div.swiper-button-next:hover,
+.pageSliderContent .swiper-vertical .swiper-button-prev:hover,
+.pageSliderContent .swiper-vertical .swiper-button-next:hover {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+    transform: translateX(-50%) scale(1.1) !important;
+}
+
+/* Vertical Slider Pagination */
+.pageSliderContent .swiper-vertical .swiper-pagination {
+    right: 20px !important;
+    left: auto !important;
+    top: 50% !important;
+    bottom: auto !important;
+    transform: translateY(-50%) !important;
+    width: auto !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.pageSliderContent .swiper-vertical .swiper-pagination-bullet {
+    margin: 4px 0 !important;
+}
+
+/* Effect Styles */
+.pageSliderContent .swiper-fade .swiper-slide {
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.pageSliderContent .swiper-fade .swiper-slide-active {
+    opacity: 1;
+}
+
+.pageSliderContent .swiper-cube {
+    overflow: visible;
+}
+
+.pageSliderContent .swiper-cube .swiper-slide {
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+}
+
+.pageSliderContent .swiper-cube .swiper-slide-shadow-left,
+.pageSliderContent .swiper-cube .swiper-slide-shadow-right,
+.pageSliderContent .swiper-cube .swiper-slide-shadow-top,
+.pageSliderContent .swiper-cube .swiper-slide-shadow-bottom {
+    z-index: 0;
+    backface-visibility: hidden;
+}
+
+.pageSliderContent .swiper-coverflow {
+    overflow: visible;
+}
+
+.pageSliderContent .swiper-coverflow .swiper-slide {
+    transform-style: preserve-3d;
+}
+
+.pageSliderContent .swiper-flip .swiper-slide {
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+}
+
+.pageSliderContent .swiper-flip .swiper-slide-shadow-left,
+.pageSliderContent .swiper-flip .swiper-slide-shadow-right {
+    z-index: 0;
+    backface-visibility: hidden;
+}
+
+.pageSliderContent .swiper-cards {
+    overflow: visible;
+}
+
+.pageSliderContent .swiper-cards .swiper-slide {
+    transform-style: preserve-3d;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.pageSliderContent .swiper-creative .swiper-slide {
+    transform-style: preserve-3d;
+}
+
+/* Video Overlay */
+.pageSliderContent video {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+
+    .pageSliderContent .swiper-button-prev,
+    .pageSliderContent .swiper-button-next {
+        width: 40px;
+        height: 40px;
+    }
+
+    .pageSliderContent .swiper-button-prev::after,
+    .pageSliderContent .swiper-button-next::after {
+        font-size: 14px;
+    }
+
+    /* Vertical Slider Mobile Navigation */
+    div.pageSliderContent div.swiper-vertical div.swiper-button-prev,
+    div.pageSliderContent div.swiper-vertical div.swiper-button-next,
+    .pageSliderContent .swiper-vertical .swiper-button-prev,
+    .pageSliderContent .swiper-vertical .swiper-button-next {
+        width: 40px !important;
+        height: 40px !important;
+    }
+
+    div.pageSliderContent div.swiper-vertical div.swiper-button-prev::after,
+    .pageSliderContent .swiper-vertical .swiper-button-prev::after {
+        border-left: 6px solid transparent !important;
+        border-right: 6px solid transparent !important;
+        border-bottom: 10px solid white !important;
+        border-top: none !important;
+    }
+
+    div.pageSliderContent div.swiper-vertical div.swiper-button-next::after,
+    .pageSliderContent .swiper-vertical .swiper-button-next::after {
+        border-left: 6px solid transparent !important;
+        border-right: 6px solid transparent !important;
+        border-top: 10px solid white !important;
+        border-bottom: none !important;
+    }
+
+    .pageSliderContent .swiper-vertical .swiper-pagination {
+        right: 10px !important;
+    }
+
+    .pageSliderContent .swiper-vertical .container {
+        padding: 80px 15px !important;
+    }
+
+    .pageSliderContent .swiper-pagination-bullet {
+        width: 10px;
+        height: 10px;
+    }
+
+    .pageSliderContent .btn {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .pageSliderContent .swiper-button-prev,
+    .pageSliderContent .swiper-button-next {
+        display: none;
+    }
+
+    /* Vertical Slider Small Screen - Keep navigation visible */
+    div.pageSliderContent div.swiper-vertical div.swiper-button-prev,
+    div.pageSliderContent div.swiper-vertical div.swiper-button-next,
+    .pageSliderContent .swiper-vertical .swiper-button-prev,
+    .pageSliderContent .swiper-vertical .swiper-button-next {
+        display: block !important;
+        width: 35px !important;
+        height: 35px !important;
+    }
+
+    .pageSliderContent .swiper-vertical .container {
+        padding: 70px 10px !important;
+    }
+
+    .pageSliderContent .container {
+        padding: 0 10px;
+    }
+}

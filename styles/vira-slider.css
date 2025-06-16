@@ -1,0 +1,282 @@
+/* VIRA SLIDER - New Clean Implementation */
+
+/* Container */
+.vira-slider-container {
+    position: relative;
+    width: 100%;
+    min-height: 500px;
+    overflow: hidden;
+}
+
+.vira-slider-container .vira-swiper {
+    width: 100%;
+    height: 100%;
+    min-height: 500px;
+}
+
+.vira-slider-container .swiper-slide {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 500px;
+    height: 100% !important;
+    width: 100%;
+}
+
+.vira-slider-container .swiper-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+/* Slide Content Container */
+.vira-slide-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    min-height: 500px;
+}
+
+/* Vertical Mode Content Spacing - Navigation butonları için alan bırak */
+.vira-slider-container.vertical-mode .vira-slide-container.vertical-content {
+    padding: 120px 40px;
+    /* Üst ve alt için daha fazla padding */
+}
+
+.vira-slide-container .slider-contents {
+    position: relative;
+    z-index: 4;
+    width: 100%;
+}
+
+.vira-slide-container .vira-slider-tag {
+    font-size: var(--title-size, 32px);
+    font-weight: bold;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.vira-slide-container .slider-description {
+    font-size: var(--paragraph-size, 14px);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.vira-slide-container .vira-slider-buttons {
+    margin-top: 1rem;
+}
+
+/* Button styles are now handled by global .btn classes in globals.css */
+
+/* NAVIGATION BUTTONS */
+.vira-nav-btn {
+    position: absolute;
+    z-index: 10;
+    width: 50px;
+    height: 50px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.vira-nav-btn:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+/* Horizontal Navigation */
+.vira-nav-btn.horizontal-prev {
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.vira-nav-btn.horizontal-next {
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.vira-nav-btn.horizontal-prev:hover {
+    transform: translateY(-50%) scale(1.1);
+}
+
+.vira-nav-btn.horizontal-next:hover {
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* Vertical Navigation */
+.vira-nav-btn.vertical-prev {
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.vira-nav-btn.vertical-next {
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.vira-nav-btn.vertical-prev:hover {
+    transform: translateX(-50%) scale(1.1);
+}
+
+.vira-nav-btn.vertical-next:hover {
+    transform: translateX(-50%) scale(1.1);
+}
+
+/* Animated Navigation */
+.vira-nav-btn.animated {
+    animation: navPulse 2s infinite;
+}
+
+@keyframes navPulse {
+
+    0%,
+    100% {
+        opacity: 0.8;
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+}
+
+/* PAGINATION */
+.horizontal-pagination {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    gap: 8px;
+}
+
+.vertical-pagination {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.horizontal-pagination .swiper-pagination-bullet,
+.vertical-pagination .swiper-pagination-bullet {
+    width: 12px;
+    height: 12px;
+    background-color: rgba(255, 255, 255, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    opacity: 1;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.horizontal-pagination .swiper-pagination-bullet-active,
+.vertical-pagination .swiper-pagination-bullet-active {
+    background-color: white;
+    transform: scale(1.2);
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+    .vira-nav-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* Mobilde vertical slider için daha fazla padding */
+    .vira-slider-container.vertical-mode .vira-slide-container.vertical-content {
+        padding: 100px 20px;
+        /* Mobilde daha az padding ama yeterli */
+    }
+
+    /* Horizontal slider için yan padding */
+    .vira-slider-container.horizontal-mode .vira-slide-container {
+        padding: 20px 80px;
+        /* Yanlardan navigation butonları için alan */
+    }
+
+    .horizontal-pagination,
+    .vertical-pagination {
+        gap: 6px;
+    }
+
+    .horizontal-pagination .swiper-pagination-bullet,
+    .vertical-pagination .swiper-pagination-bullet {
+        width: 10px;
+        height: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .vira-nav-btn {
+        width: 35px;
+        height: 35px;
+    }
+
+    /* Küçük ekranlarda daha fazla padding */
+    .vira-slider-container.vertical-mode .vira-slide-container.vertical-content {
+        padding: 90px 15px;
+    }
+
+    /* Horizontal slider için daha fazla yan padding */
+    .vira-slider-container.horizontal-mode .vira-slide-container {
+        padding: 15px 70px;
+    }
+
+    .vertical-pagination {
+        right: 10px;
+    }
+
+    /* Navigation butonları pozisyonu */
+    .vira-nav-btn.horizontal-prev {
+        left: 15px;
+    }
+
+    .vira-nav-btn.horizontal-next {
+        right: 15px;
+    }
+}
+
+/* Video Overlay */
+.vira-slider-container video {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+}
+
+/* Clean slider without complex animations */
+.vira-swiper .swiper-slide {
+    transition: transform 0.3s ease-in-out;
+}

@@ -1,13 +1,20 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import React from "react"
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { Navigation, Pagination, Autoplay } from 'swiper/modules'
+import { Navigation, Pagination, Autoplay, EffectFade, EffectCube, EffectCoverflow, EffectFlip, EffectCards, EffectCreative } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
-import { Button } from "@/components/ui/button"
+import 'swiper/css/effect-fade'
+import 'swiper/css/effect-cube'
+import 'swiper/css/effect-coverflow'
+import 'swiper/css/effect-flip'
+import 'swiper/css/effect-cards'
+import 'swiper/css/effect-creative'
 import { Card, CardContent } from "@/components/ui/card"
+import '@/styles/vira-module-renderer.module.css'
+import '@/styles/vira-slider.css'
 
 interface PageModule {
     id: string
@@ -180,9 +187,364 @@ function ParallaxModule({ content }: { content: any }) {
     return <DevelopmentPlaceholder moduleName="Parallax Modülü" />
 }
 
-// Slider Module
+// Slider Module - Completely Rewritten
 function SliderModule({ content }: { content: any }) {
-    return <DevelopmentPlaceholder moduleName="Slider Modülü" />
+    const {
+        sliderType = "horizontal",
+        loop = false,
+        autoplay = false,
+        navigation = true,
+        animatedArrows = false,
+        pagination = true,
+        slidesPerView = 1,
+        isActive = true,
+        videoDelay = 3300,
+        autoplayDelay = 2500,
+        speed = 1000,
+        titleSize = "32px",
+        paragraphSize = "14px",
+        margin = "",
+        height = "85vh",
+        effect = "",
+        slides = [],
+        uniqueId = "vira-slider-1"
+    } = content
+
+    if (!isActive) return null
+
+    const isVertical = sliderType === "vertical"
+
+    const containerStyle: React.CSSProperties = {
+        margin: margin || undefined,
+        height: height || "85vh",
+        position: 'relative',
+        overflow: 'hidden'
+    }
+
+    // Swiper modülleri
+    const getModules = () => {
+        const modules = []
+        if (navigation) modules.push(Navigation)
+        if (pagination) modules.push(Pagination)
+        if (autoplay) modules.push(Autoplay)
+
+        switch (effect) {
+            case "fade":
+                modules.push(EffectFade)
+                break
+            case "cube":
+                modules.push(EffectCube)
+                break
+            case "coverflow":
+                modules.push(EffectCoverflow)
+                break
+            case "flip":
+                modules.push(EffectFlip)
+                break
+            case "cards":
+                modules.push(EffectCards)
+                break
+            case "creative":
+                modules.push(EffectCreative)
+                break
+        }
+
+        return modules
+    }
+
+    return (
+        <div
+            className={`vira-slider-container ${isVertical ? 'vertical-mode' : 'horizontal-mode'}`}
+            id={`slider-${uniqueId}`}
+            style={{
+                ...containerStyle,
+                '--title-size': titleSize,
+                '--paragraph-size': paragraphSize
+            } as React.CSSProperties}
+        >
+            <Swiper
+                modules={getModules()}
+                direction={isVertical ? "vertical" : "horizontal"}
+                loop={loop}
+                autoplay={autoplay ? {
+                    delay: autoplayDelay,
+                    disableOnInteraction: false,
+                } : false}
+                speed={speed}
+                effect={effect || "slide"}
+                navigation={navigation ? {
+                    nextEl: `.vira-nav-next-${uniqueId}`,
+                    prevEl: `.vira-nav-prev-${uniqueId}`,
+                } : false}
+                pagination={pagination ? {
+                    el: `.vira-pagination-${uniqueId}`,
+                    clickable: true,
+                } : false}
+                slidesPerView={effect === "fade" || effect === "cube" || effect === "flip" || effect === "cards" || effect === "creative" ? 1 : slidesPerView}
+                spaceBetween={0}
+                watchSlidesProgress={true}
+                watchOverflow={true}
+
+                fadeEffect={effect === "fade" ? {
+                    crossFade: true
+                } : undefined}
+                cubeEffect={effect === "cube" ? {
+                    shadow: true,
+                    slideShadows: true,
+                    shadowOffset: 20,
+                    shadowScale: 0.94
+                } : undefined}
+                coverflowEffect={effect === "coverflow" ? {
+                    rotate: 50,
+                    stretch: 0,
+                    depth: 100,
+                    modifier: 1,
+                    slideShadows: true
+                } : undefined}
+                flipEffect={effect === "flip" ? {
+                    slideShadows: true,
+                    limitRotation: true
+                } : undefined}
+                cardsEffect={effect === "cards" ? {
+                    slideShadows: true
+                } : undefined}
+                creativeEffect={effect === "creative" ? {
+                    prev: {
+                        shadow: true,
+                        translate: [0, 0, -400]
+                    },
+                    next: {
+                        translate: ["100%", 0, 0]
+                    }
+                } : undefined}
+                className={`vira-swiper ${isVertical ? "vertical" : "horizontal"} ${effect ? `effect-${effect}` : ""}`}
+                style={{
+                    width: '100%',
+                    height: height || '85vh',
+                    minHeight: '500px'
+                }}
+            >
+                {slides && slides.map((slide: any, index: number) => (
+                    <SwiperSlide
+                        key={index}
+                        id={`slide-items-${index + 1}`}
+                        style={{
+                            backgroundImage: slide.type === 'image' && slide.imageUrl ? `url("${slide.imageUrl}")` : undefined,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            height: height || '85vh',
+                            minHeight: '500px',
+                            width: '100%'
+                        }}
+                    >
+                        <SlideContent
+                            slide={slide}
+                            titleSize={titleSize}
+                            paragraphSize={paragraphSize}
+                            videoDelay={videoDelay}
+                            slideIndex={index + 1}
+                            uniqueId={uniqueId}
+                            isVertical={isVertical}
+                        />
+                    </SwiperSlide>
+                ))}
+            </Swiper>
+
+            {/* Custom Navigation Buttons */}
+            {navigation && (
+                <>
+                    <button
+                        className={`vira-nav-btn vira-nav-prev-${uniqueId} ${isVertical ? 'vertical-prev' : 'horizontal-prev'} ${animatedArrows ? 'animated' : ''}`}
+                        aria-label="Previous slide"
+                    >
+                        {isVertical ? (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M18 15L12 9L6 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        ) : (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        )}
+                    </button>
+                    <button
+                        className={`vira-nav-btn vira-nav-next-${uniqueId} ${isVertical ? 'vertical-next' : 'horizontal-next'} ${animatedArrows ? 'animated' : ''}`}
+                        aria-label="Next slide"
+                    >
+                        {isVertical ? (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        ) : (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        )}
+                    </button>
+                </>
+            )}
+
+            {/* Custom Pagination */}
+            {pagination && (
+                <div className={`vira-pagination-${uniqueId} ${isVertical ? 'vertical-pagination' : 'horizontal-pagination'}`}></div>
+            )}
+        </div>
+    )
+}
+
+// Slide Content Component
+function SlideContent({ slide, titleSize, paragraphSize, videoDelay, slideIndex, uniqueId, isVertical }: {
+    slide: any,
+    titleSize: string,
+    paragraphSize: string,
+    videoDelay: number,
+    slideIndex: number,
+    uniqueId: string,
+    isVertical?: boolean
+}) {
+    const {
+        type = "image",
+        imageUrl = "",
+        videoUrl = "",
+        title = "",
+        titleType = "h3",
+        content = "",
+        button1Text = "",
+        button1Link = "",
+        button2Text = "",
+        button2Link = "",
+        button3Text = "",
+        button3Link = "",
+        filigranColor = "#000000",
+        textColor = "#ffffff",
+        opacity = 0.5,
+        contentPosition = "left",
+        isActive = true
+    } = slide
+
+    if (!isActive) return null
+
+    const overlayStyle: React.CSSProperties = {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: filigranColor,
+        opacity: opacity,
+        zIndex: 2
+    }
+
+    const contentStyle: React.CSSProperties = {
+        color: textColor,
+        textAlign: contentPosition as any,
+        position: 'absolute',
+        zIndex: 4,
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: contentPosition === 'center' ? 'center' : contentPosition === 'right' ? 'flex-end' : 'flex-start'
+    }
+
+    return (
+        <>
+            {/* Background Video */}
+            {type === "video" && videoUrl && (
+                <video
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        zIndex: 1,
+                        animationDelay: `${videoDelay}ms`
+                    }}
+                >
+                    <source src={videoUrl} type="video/mp4" />
+                </video>
+            )}
+
+            {/* Background Image */}
+            {type === "image" && imageUrl && (
+                <img
+                    src={imageUrl}
+                    alt={title}
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        zIndex: 1
+                    }}
+                />
+            )}
+
+            {/* Overlay */}
+            <div style={overlayStyle}></div>
+
+            {/* Content */}
+            <div className={`vira-slide-container ${isVertical ? 'vertical-content' : 'horizontal-content'}`} id={`sliderView-${slideIndex}`} style={contentStyle}>
+                <div className="slider-contents">
+                    <div>
+                        {title && (
+                            <h3
+                                className="vira-icerik-tag"
+                                style={{
+                                    color: textColor
+                                }}
+                            >
+                                {title}
+                            </h3>
+                        )}
+
+                        {content && (
+                            <div
+                                className="slider-description vira-description"
+                                style={{
+                                    color: textColor
+                                }}
+                                dangerouslySetInnerHTML={{ __html: content }}
+                            />
+                        )}
+
+                        {/* Buttons */}
+                        {(button1Text || button2Text || button3Text) && (
+                            <div
+                                className="vira-slider-buttons mt-4"
+                            >
+                                {button1Text && (
+                                    <a href={button1Link || "#"} className="btn btn-color">
+                                        {button1Text}
+                                    </a>
+                                )}
+
+                                {button2Text && (
+                                    <a href={button2Link || "#"} className="btn btn-color">
+                                        {button2Text}
+                                    </a>
+                                )}
+
+                                {button3Text && (
+                                    <a href={button3Link || "#"} className="btn btn-color">
+                                        {button3Text}
+                                    </a>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </>
+    )
 }
 
 // Contact Form Module

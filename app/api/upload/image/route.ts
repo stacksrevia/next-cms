@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { writeFile } from "fs/promises"
+import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { existsSync } from "fs"
 
 export async function POST(request: NextRequest) {
     try {
@@ -49,9 +50,24 @@ export async function POST(request: NextRequest) {
         const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
         const fileName = `${timestamp}_${originalName}`
 
+        // public/images klasörünün var olduğundan emin ol
+        const imagesDir = join(process.cwd(), 'public', 'images')
+        if (!existsSync(imagesDir)) {
+            await mkdir(imagesDir, { recursive: true })
+        }
+
         // public/images klasörüne kaydet
-        const path = join(process.cwd(), 'public', 'images', fileName)
-        await writeFile(path, buffer)
+        const path = join(imagesDir, fileName)
+
+        try {
+            await writeFile(path, buffer)
+        } catch (writeError) {
+            console.error("File write error:", writeError)
+            return NextResponse.json(
+                { error: "Dosya yazma hatası. Klasör izinlerini kontrol edin." },
+                { status: 500 }
+            )
+        }
 
         // URL'i döndür
         const imageUrl = `/images/${fileName}`
@@ -65,7 +81,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error("Error uploading image:", error)
         return NextResponse.json(
-            { error: "Resim yüklenirken hata oluştu" },
+            { error: "Resim yüklenirken hata oluştu: " + (error as Error).message },
             { status: 500 }
         )
     }

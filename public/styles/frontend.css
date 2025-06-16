@@ -1,0 +1,109 @@
+/* Frontend Specific Styles - Vira CMS */
+
+/* Dynamic Design Settings - Only for Frontend */
+
+/* Body - Menü ve Genel Font */
+body {
+    font-family: var(--vira-menu-font, var(--font-geist-sans));
+}
+
+/* Başlık Boyutu ve Kalınlığı - .vira-icerik-tag */
+.vira-icerik-tag {
+    font-size: var(--vira-title-font-size, 36px) !important;
+    font-weight: var(--vira-title-font-weight, 600) !important;
+    font-family: var(--vira-title-font, inherit) !important;
+    color: var(--vira-title-color, inherit) !important;
+}
+
+/* Genel Padding - .pageDetailContent */
+.pageDetailContent {
+    padding: var(--vira-title-padding, 40px 0px);
+}
+
+/* Paragraf Boyutu, Kalınlığı ve Yüksekliği - p tagı */
+p {
+    font-size: var(--vira-paragraph-font-size, 14px);
+    font-weight: var(--vira-paragraph-font-weight, 300);
+    line-height: var(--vira-paragraph-line-height, 1.6);
+    font-family: var(--vira-paragraph-font, inherit);
+    color: var(--vira-paragraph-color, inherit);
+}
+
+/* Buton Boyutu, Kalınlığı ve Genişliği - .btn */
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-size: var(--vira-button-font-size, 14px) !important;
+    font-weight: var(--vira-button-font-weight, 400) !important;
+    width: var(--vira-button-width, 140px) !important;
+    background-color: var(--vira-site-main-color, #007bff) !important;
+    color: white !important;
+    border-color: var(--vira-site-main-color, #007bff) !important;
+}
+
+/* Buton Hover */
+.btn:hover {
+    background-color: var(--vira-hover-color, #0056b3) !important;
+    border-color: var(--vira-hover-color, #0056b3) !important;
+}
+
+/* Site Ana Renk - .btn-color (eski stil, geriye dönük uyumluluk için) */
+.btn-color {
+    background-color: var(--vira-site-main-color, #007bff) !important;
+    color: white;
+    border-color: var(--vira-site-main-color, #007bff);
+}
+
+/* Hover Renk - .btn-color:hover (eski stil, geriye dönük uyumluluk için) */
+.btn-color:hover {
+    background-color: var(--vira-hover-color, #0056b3) !important;
+    border-color: var(--vira-hover-color, #0056b3);
+}
+
+/* Görsel Radius - img tagı */
+img {
+    border-radius: var(--vira-image-radius, 0px);
+}
+
+/* Başlık Font - bütün header tagları */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--vira-title-font, inherit);
+    color: var(--vira-title-color, inherit);
+}
+
+/* Navbar - Menü Arkaplan ve Yazı Rengi */
+navbar {
+    background-color: var(--vira-menu-background-color, transparent);
+    color: var(--vira-menu-text-color, inherit);
+}
+
+navbar * {
+    color: var(--vira-menu-text-color, inherit);
+}
+
+/* Navbar linklerin altındaki after rengi */
+navbar a::after {
+    background-color: var(--vira-site-main-color, #007bff);
+}
+
+/* Footer - Arkaplan ve Yazı Rengi */
+footer {
+    background-color: var(--vira-footer-background-color, transparent);
+    color: var(--vira-footer-text-color, inherit);
+}
+
+footer * {
+    color: var(--vira-footer-text-color, inherit);
+}

@@ -9,7 +9,7 @@ interface HomePageProps {
     }>
 }
 
-// Ana sayfayı getir (anasayfa slug'ı ile)
+// Ana sayfayı getir (order: 0 olan sayfa)
 async function getHomePage(language: string) {
     try {
         // Server-side'da direkt veritabanından al
@@ -21,11 +21,10 @@ async function getHomePage(language: string) {
             return null
         }
 
-        // Ana sayfayı bul - parentId null olan ve order 0 olan sayfa (genellikle ana sayfa)
-        const globalPage = await prisma.globalPage.findFirst({
+        // Order 0 olan sayfayı bul (ana sayfa)
+        let globalPage = await prisma.globalPage.findFirst({
             where: {
                 isActive: true,
-                parentId: null,
                 order: 0,
                 contents: {
                     some: {
@@ -82,6 +81,69 @@ async function getHomePage(language: string) {
                 }
             }
         })
+
+        // Hala bulunamazsa, bu dilde herhangi bir aktif sayfayı al (fallback)
+        if (!globalPage) {
+            globalPage = await prisma.globalPage.findFirst({
+                where: {
+                    isActive: true,
+                    contents: {
+                        some: {
+                            languageId: languageRecord.id
+                        }
+                    }
+                },
+                include: {
+                    contents: {
+                        where: { languageId: languageRecord.id },
+                        include: {
+                            language: {
+                                select: {
+                                    id: true,
+                                    code: true,
+                                    name: true,
+                                    flag: true
+                                }
+                            },
+                            modules: {
+                                where: { isActive: true },
+                                orderBy: { order: 'asc' }
+                            }
+                        }
+                    },
+                    parent: {
+                        select: {
+                            id: true,
+                            slug: true,
+                            contents: {
+                                where: { languageId: languageRecord.id },
+                                select: {
+                                    title: true,
+                                    slug: true
+                                }
+                            }
+                        }
+                    },
+                    children: {
+                        where: { isActive: true },
+                        select: {
+                            id: true,
+                            slug: true,
+                            order: true,
+                            contents: {
+                                where: { languageId: languageRecord.id },
+                                select: {
+                                    title: true,
+                                    slug: true
+                                }
+                            }
+                        },
+                        orderBy: { order: 'asc' }
+                    }
+                },
+                orderBy: { order: 'asc' }
+            })
+        }
 
         if (!globalPage) {
             return null

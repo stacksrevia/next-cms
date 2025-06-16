@@ -75,7 +75,7 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
                     <div className="flex items-center border-b px-4 py-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                         <SidebarTrigger />
                     </div>
-                    <div className="flex-1 overflow-auto">
+                    <div className="flex-1 overflow-auto p-6">
                         {children}
                     </div>
                 </main>

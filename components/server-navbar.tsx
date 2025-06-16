@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { ClientNavbarWrapper } from './client-navbar-wrapper'
+import { getDesignData } from '@/lib/design-utils'
 
 interface ServerNavbarProps {
     currentLanguage: string
@@ -12,8 +13,17 @@ async function getNavbarData(languageCode: string) {
             where: { code: languageCode }
         })
 
+        // Logo çekme
+        let logos = null
+        try {
+            // @ts-ignore - Prisma client henüz generate edilmedi
+            logos = await prisma.globalLogos.findFirst()
+        } catch (error) {
+            console.log('Logo table not found yet')
+        }
+
         if (!language) {
-            return { pages: [], language: null }
+            return { pages: [], language: null, logo: null }
         }
 
         const globalPages = await prisma.globalPage.findMany({
@@ -81,21 +91,27 @@ async function getNavbarData(languageCode: string) {
                 flag: language.flag,
                 isDefault: language.isDefault,
                 isActive: language.isActive
-            }
+            },
+            logo: logos?.logo || null
         }
     } catch (error) {
         console.error('Database error:', error)
-        return { pages: [], language: null }
+        return { pages: [], language: null, logo: null }
     }
 }
 
 export async function ServerNavbar({ currentLanguage }: ServerNavbarProps) {
-    const navbarData = await getNavbarData(currentLanguage)
+    const [navbarData, designData] = await Promise.all([
+        getNavbarData(currentLanguage),
+        getDesignData()
+    ])
 
     return (
         <ClientNavbarWrapper
             pages={navbarData.pages}
             currentLanguage={navbarData.language}
+            logo={navbarData.logo}
+            designData={designData}
         />
     )
 } 

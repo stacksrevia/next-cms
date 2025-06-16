@@ -156,7 +156,151 @@
   }
 }
 
+/* Professional Custom Scrollbar Styles */
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
 
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+  border-radius: 0;
+  border-left: 1px solid hsl(var(--border));
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg,
+      hsl(var(--muted-foreground) / 0.15) 0%,
+      hsl(var(--muted-foreground) / 0.25) 50%,
+      hsl(var(--muted-foreground) / 0.15) 100%);
+  border-radius: 6px;
+  border: 2px solid hsl(var(--background));
+  box-shadow: inset 0 1px 0 hsl(var(--muted-foreground) / 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg,
+      hsl(var(--muted-foreground) / 0.25) 0%,
+      hsl(var(--muted-foreground) / 0.4) 50%,
+      hsl(var(--muted-foreground) / 0.25) 100%);
+  box-shadow: inset 0 1px 0 hsl(var(--muted-foreground) / 0.2),
+    0 2px 4px hsl(var(--muted-foreground) / 0.1);
+  transform: scaleX(1.1);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg,
+      hsl(var(--muted-foreground) / 0.35) 0%,
+      hsl(var(--muted-foreground) / 0.5) 50%,
+      hsl(var(--muted-foreground) / 0.35) 100%);
+  box-shadow: inset 0 1px 0 hsl(var(--muted-foreground) / 0.3),
+    inset 0 -1px 0 hsl(var(--muted-foreground) / 0.1);
+  transform: scaleX(1.05);
+}
+
+::-webkit-scrollbar-corner {
+  background: hsl(var(--background));
+  border-left: 1px solid hsl(var(--border));
+  border-top: 1px solid hsl(var(--border));
+}
+
+/* Horizontal scrollbar specific */
+::-webkit-scrollbar:horizontal {
+  height: 12px;
+}
+
+::-webkit-scrollbar-track:horizontal {
+  border-left: none;
+  border-top: 1px solid hsl(var(--border));
+}
+
+::-webkit-scrollbar-thumb:horizontal:hover {
+  transform: scaleY(1.1);
+}
+
+::-webkit-scrollbar-thumb:horizontal:active {
+  transform: scaleY(1.05);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.2) hsl(var(--background));
+}
+
+/* Dark theme specific scrollbar */
+.dark ::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+  border-left: 1px solid hsl(var(--border));
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg,
+      hsl(var(--muted-foreground) / 0.2) 0%,
+      hsl(var(--muted-foreground) / 0.35) 50%,
+      hsl(var(--muted-foreground) / 0.2) 100%);
+  box-shadow: inset 0 1px 0 hsl(var(--muted-foreground) / 0.15);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg,
+      hsl(var(--muted-foreground) / 0.3) 0%,
+      hsl(var(--muted-foreground) / 0.5) 50%,
+      hsl(var(--muted-foreground) / 0.3) 100%);
+  box-shadow: inset 0 1px 0 hsl(var(--muted-foreground) / 0.25),
+    0 2px 6px hsl(var(--muted-foreground) / 0.15);
+}
+
+.dark ::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg,
+      hsl(var(--muted-foreground) / 0.4) 0%,
+      hsl(var(--muted-foreground) / 0.6) 50%,
+      hsl(var(--muted-foreground) / 0.4) 100%);
+  box-shadow: inset 0 1px 0 hsl(var(--muted-foreground) / 0.35),
+    inset 0 -1px 0 hsl(var(--muted-foreground) / 0.15);
+}
+
+.dark * {
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) hsl(var(--background));
+}
+
+/* Graphite theme specific scrollbar */
+.graphite ::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+  border-left: 1px solid hsl(var(--border));
+}
+
+.graphite ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg,
+      hsl(var(--accent) / 0.15) 0%,
+      hsl(var(--accent) / 0.25) 50%,
+      hsl(var(--accent) / 0.15) 100%);
+  box-shadow: inset 0 1px 0 hsl(var(--accent) / 0.1);
+}
+
+.graphite ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg,
+      hsl(var(--accent) / 0.25) 0%,
+      hsl(var(--accent) / 0.4) 50%,
+      hsl(var(--accent) / 0.25) 100%);
+  box-shadow: inset 0 1px 0 hsl(var(--accent) / 0.2),
+    0 2px 6px hsl(var(--accent) / 0.1);
+}
+
+.graphite ::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg,
+      hsl(var(--accent) / 0.35) 0%,
+      hsl(var(--accent) / 0.5) 50%,
+      hsl(var(--accent) / 0.35) 100%);
+  box-shadow: inset 0 1px 0 hsl(var(--accent) / 0.3),
+    inset 0 -1px 0 hsl(var(--accent) / 0.1);
+}
+
+.graphite * {
+  scrollbar-color: hsl(var(--accent) / 0.25) hsl(var(--background));
+}
 
 /* TipTap Editor Styles */
 .ProseMirror {
@@ -465,11 +609,18 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .pageDetailContent {
-    padding: 40px 0;
+    padding: 40px 20px;
+    /* Yan padding ekle */
   }
 
   .pageDetailContent.full-screen {
-    padding: 60px 0;
+    padding: 60px 20px;
+    /* Yan padding ekle */
+  }
+
+  .pageDetailContent.textImg {
+    padding: 40px 20px;
+    /* Text+Image için özel padding */
   }
 
   .vira-icerik-tag {
@@ -481,15 +632,38 @@
     font-size: 14px;
   }
 
+  /* Text+Image modülü için responsive grid */
   .rexa-content.content-right,
   .rexa-content.content-left {
     order: 2 !important;
     margin-top: 30px;
+    padding: 0 !important;
+    /* Ekstra padding kaldır */
+    text-align: left !important;
+    /* Sola hizala */
   }
 
   .rexa-gorseller.gorsel-left,
   .rexa-gorseller.gorsel-right {
     order: 1 !important;
+    margin-bottom: 20px;
+    /* Alt margin ekle */
+  }
+
+  /* Container genişliği */
+  .pageDetailContent .container {
+    max-width: 100% !important;
+    padding: 0 15px !important;
+  }
+
+  /* Row ve col düzenlemeleri */
+  .pageDetailContent .row {
+    margin: 0 !important;
+  }
+
+  .pageDetailContent .col-md-6 {
+    padding: 0 !important;
+    width: 100% !important;
   }
 
   .pageDetailContent.full-screen .vira-swiper-carousel,
@@ -509,4 +683,119 @@
   .vira-swiper .swiper-pagination {
     bottom: 10px !important;
   }
+}
+
+/* Tablet responsive */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .pageDetailContent {
+    padding: 60px 40px;
+  }
+
+  .pageDetailContent.textImg {
+    padding: 60px 40px;
+  }
+
+  .rexa-content.content-right,
+  .rexa-content.content-left {
+    padding: 0 20px;
+  }
+}
+
+/* Dynamic Design Settings - Vira CMS */
+
+/* Body - Menü ve Genel Font */
+body {
+  font-family: var(--vira-menu-font, var(--font-geist-sans));
+}
+
+/* Başlık Boyutu ve Kalınlığı - .vira-icerik-tag */
+.vira-icerik-tag {
+  font-size: var(--vira-title-font-size, 36px) !important;
+  font-weight: var(--vira-title-font-weight, 600) !important;
+  font-family: var(--vira-title-font, inherit) !important;
+  color: var(--vira-title-color, inherit) !important;
+}
+
+/* Genel Padding - .pageDetailContent */
+.pageDetailContent {
+  padding: var(--vira-title-padding, 40px 0px);
+}
+
+/* Paragraf Boyutu, Kalınlığı ve Yüksekliği - p tagı */
+p {
+  font-size: var(--vira-paragraph-font-size, 14px);
+  font-weight: var(--vira-paragraph-font-weight, 300);
+  line-height: var(--vira-paragraph-line-height, 1.6);
+  font-family: var(--vira-paragraph-font, inherit);
+  color: var(--vira-paragraph-color, inherit);
+}
+
+/* Buton Boyutu, Kalınlığı ve Genişliği - .btn */
+.btn {
+  display: inline-block;
+  padding: 12px 24px;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  cursor: pointer;
+  font-size: var(--vira-button-font-size, 14px) !important;
+  font-weight: var(--vira-button-font-weight, 400) !important;
+  width: var(--vira-button-width, 140px) !important;
+}
+
+/* Site Ana Renk - .btn-color */
+.btn-color {
+  background-color: var(--vira-site-main-color, #007bff) !important;
+  color: white;
+  border-color: var(--vira-site-main-color, #007bff);
+}
+
+/* Hover Renk - .btn-color:hover */
+.btn-color:hover {
+  background-color: var(--vira-hover-color, #0056b3) !important;
+  border-color: var(--vira-hover-color, #0056b3);
+}
+
+/* Görsel Radius - img tagı */
+img {
+  border-radius: var(--vira-image-radius, 0px);
+}
+
+/* Başlık Font - bütün header tagları */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--vira-title-font, inherit);
+  color: var(--vira-title-color, inherit);
+}
+
+/* Navbar - Menü Arkaplan ve Yazı Rengi */
+navbar {
+  background-color: var(--vira-menu-background-color, transparent);
+  color: var(--vira-menu-text-color, inherit);
+}
+
+navbar * {
+  color: var(--vira-menu-text-color, inherit);
+}
+
+/* Navbar linklerin altındaki after rengi */
+navbar a::after {
+  background-color: var(--vira-site-main-color, #007bff);
+}
+
+/* Footer - Arkaplan ve Yazı Rengi */
+footer {
+  background-color: var(--vira-footer-background-color, transparent);
+  color: var(--vira-footer-text-color, inherit);
+}
+
+footer * {
+  color: var(--vira-footer-text-color, inherit);
 }

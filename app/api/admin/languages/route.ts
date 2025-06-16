@@ -45,8 +45,14 @@ export async function POST(request: NextRequest) {
 
         // Transaction ile tüm işlemleri güvenli şekilde yap
         const result = await prisma.$transaction(async (tx) => {
+            // Mevcut dilleri kontrol et
+            const currentLanguages = await tx.language.findMany()
+
+            // Eğer hiç dil yoksa, bu dil otomatik olarak varsayılan olacak
+            const shouldBeDefault = currentLanguages.length === 0 || isDefault
+
             // Eğer bu varsayılan dil olacaksa, diğerlerini varsayılan olmaktan çıkar
-            if (isDefault) {
+            if (shouldBeDefault) {
                 await tx.language.updateMany({
                     where: { isDefault: true },
                     data: { isDefault: false }
@@ -59,7 +65,7 @@ export async function POST(request: NextRequest) {
                     code: code.toLowerCase(),
                     name,
                     flag: flag.toUpperCase(),
-                    isDefault,
+                    isDefault: shouldBeDefault,
                     isActive: true
                 }
             })

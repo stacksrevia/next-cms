@@ -71,12 +71,18 @@ export async function GET(request: NextRequest) {
             orderBy: { order: 'asc' }
         })
 
+        // Varsayılan dili bul
+        const defaultLanguage = await prisma.language.findFirst({
+            where: { isDefault: true }
+        })
+
         // Admin formatı
         const adminPages = globalPages.map(globalPage => {
             // Eğer belirli bir dil seçildiyse o dilin içeriğini al
+            // Yoksa varsayılan dilin içeriğini al
             const content = languageId
                 ? globalPage.contents.find(c => c.languageId === languageId)
-                : globalPage.contents[0] // İlk içeriği al
+                : globalPage.contents.find(c => c.languageId === defaultLanguage?.id) || globalPage.contents[0]
 
             return {
                 id: globalPage.id,
@@ -101,7 +107,7 @@ export async function GET(request: NextRequest) {
                     slug: globalPage.parent.slug,
                     title: languageId
                         ? globalPage.parent.contents.find(c => c.languageId === languageId)?.title || 'İçerik Yok'
-                        : globalPage.parent.contents[0]?.title || 'İçerik Yok'
+                        : globalPage.parent.contents.find(c => c.languageId === defaultLanguage?.id)?.title || globalPage.parent.contents[0]?.title || 'İçerik Yok'
                 } : null,
                 children: globalPage.children.map(child => ({
                     id: child.id,
@@ -110,7 +116,7 @@ export async function GET(request: NextRequest) {
                     isActive: child.isActive,
                     title: languageId
                         ? child.contents.find(c => c.languageId === languageId)?.title || 'İçerik Yok'
-                        : child.contents[0]?.title || 'İçerik Yok'
+                        : child.contents.find(c => c.languageId === defaultLanguage?.id)?.title || child.contents[0]?.title || 'İçerik Yok'
                 }))
             }
         })

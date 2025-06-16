@@ -1,9 +1,13 @@
 import { notFound } from "next/navigation";
 import { getLanguageByCode, getLanguages } from "@/lib/language-utils";
+import { getDesignData, getLogoData } from "@/lib/design-utils";
 import { LanguageProvider } from '@/lib/language-context';
+import { DesignStylesInjector } from "@/components/design-styles-injector";
 import { Metadata } from "next";
 import { LanguageHtmlUpdater } from "@/components/language-html-updater";
 import { AOSProvider } from "../../components/aos-provider";
+import { FrontendStyles } from "@/components/frontend-styles";
+import { MinimalLoading } from "@/components/minimal-loading";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 interface LanguageLayoutProps {
@@ -36,9 +40,11 @@ export default async function LanguageLayout({
     params,
 }: LanguageLayoutProps) {
     const { language } = await params;
-    const [currentLanguage, allLanguages] = await Promise.all([
+    const [currentLanguage, allLanguages, designData, logoData] = await Promise.all([
         getLanguageByCode(language),
-        getLanguages()
+        getLanguages(),
+        getDesignData(),
+        getLogoData()
     ]);
 
     if (!currentLanguage) {
@@ -50,10 +56,13 @@ export default async function LanguageLayout({
             initialLanguage={currentLanguage}
             initialLanguages={allLanguages}
         >
+            <DesignStylesInjector designData={designData} logoData={logoData} />
+            <FrontendStyles />
             <LanguageHtmlUpdater
                 language={currentLanguage.code}
                 direction={currentLanguage.code === 'ar' ? 'rtl' : 'ltr'}
             />
+            <MinimalLoading logo={logoData} />
             <AOSProvider>
                 <div className="min-h-screen flex flex-col">
                     <main className="flex-1">

@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server'
 // Desteklenen dilleri cache'lemek için
 let cachedLanguages: { code: string; isDefault: boolean }[] | null = null
 let cacheTime = 0
-const CACHE_DURATION = 10 * 1000 // 10 saniye - çok kısa cache süresi
+const CACHE_DURATION = 30 * 1000 // 30 saniye
 
 // Cache'i temizlemek için - export edildi
 export function clearLanguageCache() {
@@ -16,35 +16,47 @@ export function clearLanguageCache() {
 async function getLanguages(request: NextRequest) {
     const now = Date.now()
 
-    // Cache kontrolü - çok kısa süre
+    // Cache kontrolü
     if (cachedLanguages && (now - cacheTime) < CACHE_DURATION) {
         return cachedLanguages
     }
 
     try {
-        // API route'dan dilleri al
-        const url = new URL('/api/languages', request.url)
-        const response = await fetch(url.toString(), {
-            // Cache'i bypass et
-            cache: 'no-store',
+        // Production ortamında absolute URL kullan
+        const protocol = request.headers.get('x-forwarded-proto') ||
+            (request.url.startsWith('https') ? 'https' : 'http')
+        const host = request.headers.get('host') ||
+            request.headers.get('x-forwarded-host') ||
+            new URL(request.url).host
+
+        const baseUrl = `${protocol}://${host}`
+        const apiUrl = `${baseUrl}/api/languages`
+
+        const response = await fetch(apiUrl, {
+            method: 'GET',
             headers: {
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            }
+                'Cache-Control': 'no-cache',
+                'Accept': 'application/json',
+                'User-Agent': 'NextJS-Middleware/1.0'
+            },
+            // Timeout ekle
+            signal: AbortSignal.timeout(5000) // 5 saniye timeout
         })
 
         if (!response.ok) {
-            throw new Error(`API response not ok: ${response.status}`)
+            throw new Error(`API response not ok: ${response.status} - ${response.statusText}`)
         }
 
         const data = await response.json()
-        const languages = data.languages || data // API response format'ını handle et
+        const languages = data.languages || data
 
         // Response'un array olduğunu ve geçerli data içerdiğini kontrol et
         if (!Array.isArray(languages) || languages.length === 0) {
-            console.warn('Invalid languages response, using fallback')
-            return [{ code: 'tr', isDefault: true }]
+            console.warn('No languages found, using fallback')
+            const fallbackLanguages = [{ code: 'tr', isDefault: true }]
+            cachedLanguages = fallbackLanguages
+            cacheTime = now
+            return fallbackLanguages
         }
 
         // Her language objesinin gerekli property'lere sahip olduğunu kontrol et
@@ -54,7 +66,10 @@ async function getLanguages(request: NextRequest) {
 
         if (validLanguages.length === 0) {
             console.warn('No valid languages found, using fallback')
-            return [{ code: 'tr', isDefault: true }]
+            const fallbackLanguages = [{ code: 'tr', isDefault: true }]
+            cachedLanguages = fallbackLanguages
+            cacheTime = now
+            return fallbackLanguages
         }
 
         cachedLanguages = validLanguages
@@ -64,7 +79,10 @@ async function getLanguages(request: NextRequest) {
     } catch (error) {
         console.error('Error fetching languages in middleware:', error)
         // Fallback olarak Türkçe döndür
-        return [{ code: 'tr', isDefault: true }]
+        const fallbackLanguages = [{ code: 'tr', isDefault: true }]
+        cachedLanguages = fallbackLanguages
+        cacheTime = now
+        return fallbackLanguages
     }
 }
 
@@ -113,7 +131,11 @@ export async function middleware(request: NextRequest) {
 
     } catch (error) {
         console.error('Middleware error:', error)
-        // Hata durumunda güvenli fallback
+        // Hata durumunda güvenli fallback - Türkçe'ye yönlendir
+        const segments = pathname.split('/').filter(Boolean)
+        if (segments.length === 0 || !['tr', 'en'].includes(segments[0])) {
+            return NextResponse.redirect(new URL(`/tr${pathname}`, request.url))
+        }
         return NextResponse.next()
     }
 }

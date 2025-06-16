@@ -1,23 +1,28 @@
 import type { Metadata } from "next"
-import { AppInitializer } from "@/components/providers/app-initializer"
 import { AdminLayoutClient } from "@/components/admin/admin-layout-client"
 import { AdminThemeProvider } from "@/components/admin/admin-theme-provider"
+import { DesignStylesInjector } from "@/components/design-styles-injector"
+import { getLogoData, getDesignData } from "@/lib/design-utils"
 
 export const metadata: Metadata = {
     title: "Admin Panel",
     description: "Admin panel for managing the application",
 }
 
-export default function AdminLayout({
+export default async function AdminLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
+    const [logoData, designData] = await Promise.all([
+        getLogoData(),
+        getDesignData()
+    ])
+
     return (
         <AdminThemeProvider>
-            <AppInitializer>
-                <AdminLayoutClient>{children}</AdminLayoutClient>
-            </AppInitializer>
+            <DesignStylesInjector designData={designData} logoData={logoData} />
+            <AdminLayoutClient>{children}</AdminLayoutClient>
         </AdminThemeProvider>
     )
 } 

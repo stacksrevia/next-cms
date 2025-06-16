@@ -93,10 +93,18 @@ export async function PATCH(
             }
         }
 
+        // Varsayılan dilin pasif bırakılmasını engelle
+        if (existingLanguage.isDefault && isActive === false) {
+            return NextResponse.json(
+                { error: 'Varsayılan dil pasif bırakılamaz!' },
+                { status: 400 }
+            )
+        }
+
         // Transaction ile güncelle
         const result = await prisma.$transaction(async (tx) => {
             // Eğer bu varsayılan dil olacaksa, diğerlerini varsayılan olmaktan çıkar
-            if (isDefault && !existingLanguage.isDefault) {
+            if (isDefault === true && !existingLanguage.isDefault) {
                 await tx.language.updateMany({
                     where: {
                         id: { not: id },
@@ -183,32 +191,21 @@ export async function DELETE(
             )
         }
 
-        // Varsayılan dil silinmeye çalışılıyorsa kontrol et
+        // Toplam dil sayısını kontrol et - en az 1 dil olmalı
+        const totalLanguages = await prisma.language.count()
+        if (totalLanguages <= 1) {
+            return NextResponse.json(
+                { error: 'Son dil silinemez. En az bir dil bulunmalıdır.' },
+                { status: 400 }
+            )
+        }
+
+        // Varsayılan dil silinmeye çalışılıyorsa engelle
         if (existingLanguage.isDefault) {
-            const totalLanguages = await prisma.language.count()
-
-            if (totalLanguages <= 1) {
-                return NextResponse.json(
-                    { error: 'Son dil silinemez' },
-                    { status: 400 }
-                )
-            }
-
-            // Başka bir dili varsayılan yap
-            const nextLanguage = await prisma.language.findFirst({
-                where: {
-                    id: { not: id },
-                    isActive: true
-                }
-            })
-
-            if (nextLanguage) {
-                await prisma.language.update({
-                    where: { id: nextLanguage.id },
-                    data: { isDefault: true }
-                })
-                console.log(`🔄 Yeni varsayılan dil: ${nextLanguage.name}`)
-            }
+            return NextResponse.json(
+                { error: 'Varsayılan dil silinemez. Önce başka bir dili varsayılan yapın.' },
+                { status: 400 }
+            )
         }
 
         // Transaction ile sil

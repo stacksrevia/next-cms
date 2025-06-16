@@ -130,6 +130,13 @@ export default function LanguagesManagement() {
                     isActive: true
                 })
                 fetchLanguages()
+
+                // Yeni dil eklendiyse sayfayı yenile (middleware cache'ini temizlemek için)
+                if (!editingLanguage) {
+                    setTimeout(() => {
+                        window.location.reload()
+                    }, 1000)
+                }
             } else {
                 const error = await response.json()
                 toast.error(error.error || 'Bir hata oluştu')
@@ -173,7 +180,13 @@ export default function LanguagesManagement() {
         }
     }
 
-    const handleToggleStatus = async (id: string, isActive: boolean) => {
+    const handleToggleStatus = async (id: string, isActive: boolean, language: Language) => {
+        // Varsayılan dili pasif bırakmayı engelle
+        if (language.isDefault && !isActive) {
+            toast.error('Varsayılan dil pasif bırakılamaz!')
+            return
+        }
+
         try {
             const response = await fetch(`/api/admin/languages/${id}`, {
                 method: 'PATCH',
@@ -230,16 +243,14 @@ export default function LanguagesManagement() {
 
     if (loading) {
         return (
-            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-                <div className="flex items-center justify-center min-h-[400px]">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
         )
     }
 
     return (
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <div className="flex-1 space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -467,7 +478,7 @@ export default function LanguagesManagement() {
                                                 <div className="flex items-center space-x-2">
                                                     <Switch
                                                         checked={language.isActive}
-                                                        onCheckedChange={(checked) => handleToggleStatus(language.id, checked)}
+                                                        onCheckedChange={(checked) => handleToggleStatus(language.id, checked, language)}
                                                     />
                                                     <Badge variant={language.isActive ? "default" : "secondary"}>
                                                         {language.isActive ? "Aktif" : "Pasif"}
@@ -594,9 +605,24 @@ export default function LanguagesManagement() {
                                 <Switch
                                     id="edit-isActive"
                                     checked={formData.isActive}
-                                    onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+                                    disabled={editingLanguage?.isDefault && !formData.isActive}
+                                    onCheckedChange={(checked) => {
+                                        // Varsayılan dili pasif bırakmayı engelle
+                                        if (editingLanguage?.isDefault && !checked) {
+                                            toast.error('Varsayılan dil pasif bırakılamaz!')
+                                            return
+                                        }
+                                        setFormData({ ...formData, isActive: checked })
+                                    }}
                                 />
-                                <Label htmlFor="edit-isActive">Aktif</Label>
+                                <Label htmlFor="edit-isActive">
+                                    Aktif
+                                    {editingLanguage?.isDefault && (
+                                        <span className="text-xs text-muted-foreground ml-1">
+                                            (Varsayılan dil pasif bırakılamaz)
+                                        </span>
+                                    )}
+                                </Label>
                             </div>
                         </div>
                         <DialogFooter className="mt-6">

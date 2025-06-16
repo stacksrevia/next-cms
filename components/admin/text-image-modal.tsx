@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Slider } from "@/components/ui/slider"
+import { ImageSelector } from "@/components/ui/image-selector"
 import {
     Bold,
     Italic,
@@ -37,7 +38,8 @@ import {
     Type,
     Upload,
     X,
-    Plus
+    Plus,
+    Trash2
 } from "lucide-react"
 
 interface ImageItem {
@@ -90,6 +92,24 @@ export function TextImageModal({ isOpen, onClose, onSave, initialContent }: Text
             setMultipleImages(initialContent.multipleImages || [])
             setTextAnimation(initialContent.textAnimation || "fade-left")
             setImageAnimation(initialContent.imageAnimation || "fade-right")
+        } else {
+            // Yeni modül oluşturulurken temiz başla
+            setTitle("")
+            setTitleType("h1")
+            setContent("")
+            setContentLength([6])
+            setIsFullScreen(false)
+            setHasMultipleImages(false)
+            setTextPosition("left")
+            setIsActive(true)
+            setCenterContent(false)
+            setMargin("")
+            setPadding("")
+            setBackgroundColor("")
+            setMainImage("")
+            setMultipleImages([])
+            setTextAnimation("fade-left")
+            setImageAnimation("fade-right")
         }
     }, [initialContent])
 
@@ -158,40 +178,23 @@ export function TextImageModal({ isOpen, onClose, onSave, initialContent }: Text
     }
 
     const addMultipleImage = () => {
-        const url = prompt('Resim URL\'sini girin:')
-        if (url) {
-            setMultipleImages([...multipleImages, { url, alt: '' }])
-        }
+        setMultipleImages([...multipleImages, { url: "", alt: '' }])
     }
 
     const removeMultipleImage = (index: number) => {
         setMultipleImages(multipleImages.filter((_: any, i: number) => i !== index))
     }
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (!file) return
+    const updateMultipleImage = (index: number, url: string) => {
+        const updatedImages = [...multipleImages]
+        updatedImages[index] = { ...updatedImages[index], url }
+        setMultipleImages(updatedImages)
+    }
 
-        try {
-            const formData = new FormData()
-            formData.append('file', file)
-
-            const response = await fetch('/api/upload/image', {
-                method: 'POST',
-                body: formData,
-            })
-
-            const result = await response.json()
-
-            if (result.success) {
-                setMainImage(result.url)
-            } else {
-                alert(result.error || 'Resim yüklenirken hata oluştu')
-            }
-        } catch (error) {
-            console.error('Upload error:', error)
-            alert('Resim yüklenirken hata oluştu')
-        }
+    const updateMultipleImageAlt = (index: number, alt: string) => {
+        const updatedImages = [...multipleImages]
+        updatedImages[index] = { ...updatedImages[index], alt }
+        setMultipleImages(updatedImages)
     }
 
     if (!editor) return null
@@ -572,47 +575,47 @@ export function TextImageModal({ isOpen, onClose, onSave, initialContent }: Text
                             {!hasMultipleImages ? (
                                 <div>
                                     <Label htmlFor="mainImage" className="text-xs">Ana Görsel</Label>
-                                    <div className="space-y-1 mt-1">
-                                        <Input
-                                            id="mainImage"
+                                    <div className="space-y-2 mt-1">
+                                        <ImageSelector
                                             value={mainImage}
-                                            onChange={(e) => setMainImage(e.target.value)}
-                                            placeholder="https://example.com/image.jpg"
-                                            className="h-7"
+                                            onSelect={setMainImage}
+                                            trigger={
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="w-full h-8 text-xs"
+                                                >
+                                                    <ImageIcon className="h-3 w-3 mr-1" />
+                                                    {mainImage ? "Görseli Değiştir" : "Görsel Seç"}
+                                                </Button>
+                                            }
+                                            title="Ana Görsel Seç"
+                                            description="Text+Image modülü için ana görsel seçin"
                                         />
-                                        <div className="flex gap-1">
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={handleImageUpload}
-                                                className="hidden"
-                                                id="imageUpload"
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => document.getElementById('imageUpload')?.click()}
-                                                className="h-6 px-2 text-xs"
-                                            >
-                                                <Upload className="h-3 w-3 mr-1" />
-                                                Yükle
-                                            </Button>
-                                        </div>
+                                        {mainImage && (
+                                            <div className="relative">
+                                                <img
+                                                    src={mainImage}
+                                                    alt="Preview"
+                                                    className="w-full h-16 object-cover rounded border"
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => setMainImage("")}
+                                                    className="absolute top-1 right-1 h-6 w-6 p-0"
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        )}
                                     </div>
-                                    {mainImage && (
-                                        <div className="mt-1">
-                                            <img
-                                                src={mainImage}
-                                                alt="Preview"
-                                                className="w-full h-16 object-cover rounded border"
-                                            />
-                                        </div>
-                                    )}
                                 </div>
                             ) : (
                                 <div>
-                                    <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center justify-between mb-2">
                                         <Label className="text-xs">Çoklu Görsel</Label>
                                         <Button
                                             variant="outline"
@@ -623,23 +626,52 @@ export function TextImageModal({ isOpen, onClose, onSave, initialContent }: Text
                                             <Plus className="h-3 w-3" />
                                         </Button>
                                     </div>
-                                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                                    <div className="space-y-2 max-h-40 overflow-y-auto">
                                         {multipleImages.map((img: any, index: number) => (
-                                            <div key={index} className="flex items-center gap-1 p-1 border rounded">
-                                                <img
-                                                    src={img.url}
-                                                    alt={`Image ${index + 1}`}
-                                                    className="w-8 h-8 object-cover rounded"
+                                            <div key={index} className="space-y-1 p-2 border rounded">
+                                                <div className="flex items-center justify-between">
+                                                    <Label className="text-xs">Görsel {index + 1}</Label>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => removeMultipleImage(index)}
+                                                        className="h-6 w-6 p-0"
+                                                    >
+                                                        <Trash2 className="h-3 w-3" />
+                                                    </Button>
+                                                </div>
+                                                <ImageSelector
+                                                    value={img.url}
+                                                    onSelect={(url) => updateMultipleImage(index, url)}
+                                                    trigger={
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="w-full h-7 text-xs"
+                                                        >
+                                                            <ImageIcon className="h-3 w-3 mr-1" />
+                                                            {img.url ? "Görseli Değiştir" : "Görsel Seç"}
+                                                        </Button>
+                                                    }
+                                                    title={`Görsel ${index + 1} Seç`}
+                                                    description="Çoklu görsel için bir görsel seçin"
                                                 />
-                                                <span className="flex-1 text-xs truncate">{img.url}</span>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => removeMultipleImage(index)}
-                                                    className="h-6 w-6 p-0"
-                                                >
-                                                    <X className="h-3 w-3" />
-                                                </Button>
+                                                {img.url && (
+                                                    <div className="relative">
+                                                        <img
+                                                            src={img.url}
+                                                            alt={`Image ${index + 1}`}
+                                                            className="w-full h-12 object-cover rounded border"
+                                                        />
+                                                    </div>
+                                                )}
+                                                <Input
+                                                    value={img.alt}
+                                                    onChange={(e) => updateMultipleImageAlt(index, e.target.value)}
+                                                    placeholder="Alt text (opsiyonel)"
+                                                    className="h-6 text-xs"
+                                                />
                                             </div>
                                         ))}
                                     </div>

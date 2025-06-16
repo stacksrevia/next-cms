@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { Shield, User, Lock, Eye, EyeOff, Loader2 } from "lucide-react"
+import { Shield, User, Lock, Eye, EyeOff } from "lucide-react"
 import { useState, useEffect } from "react"
 import { signIn, getSession, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -177,17 +177,8 @@ export default function AdminLogin() {
                                 size="lg"
                                 disabled={isLoading}
                             >
-                                {isLoading ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Giriş yapılıyor...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Shield className="mr-2 h-4 w-4" />
-                                        Giriş Yap
-                                    </>
-                                )}
+                                <Shield className="mr-2 h-4 w-4" />
+                                {isLoading ? "Giriş yapılıyor..." : "Giriş Yap"}
                             </Button>
                         </form>
 

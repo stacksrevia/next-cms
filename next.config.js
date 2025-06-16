@@ -9,7 +9,7 @@ const nextConfig = {
         ignoreBuildErrors: false,
     },
     images: {
-        domains: ['localhost'],
+        domains: ['localhost', 'xvibe.fun'],
         remotePatterns: [
             {
                 protocol: 'https',
@@ -20,6 +20,9 @@ const nextConfig = {
                 hostname: '**',
             },
         ],
+    },
+    experimental: {
+        outputFileTracingRoot: undefined,
     },
 }
 

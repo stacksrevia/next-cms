@@ -1,106 +1,60 @@
-import { prisma } from "./prisma"
-import bcrypt from "bcryptjs"
+import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
-export async function seedAdminUser() {
+const prisma = new PrismaClient()
+
+export async function ensureAdminExists() {
     try {
         // Check if any admin user exists
         const existingAdmin = await prisma.user.findFirst({
             where: {
-                role: "ADMIN"
+                role: 'ADMIN'
             }
         })
 
         if (existingAdmin) {
-            console.log("Admin user already exists")
-            return { success: true, message: "Admin user already exists" }
+            return {
+                success: true,
+                message: 'Admin user already exists',
+                user: {
+                    id: existingAdmin.id,
+                    email: existingAdmin.email,
+                    name: existingAdmin.name,
+                    role: existingAdmin.role
+                }
+            }
         }
 
         // Create default admin user
-        const hashedPassword = await bcrypt.hash("admin123", 12)
+        const hashedPassword = await bcrypt.hash('admin123', 12)
 
-        const admin = await prisma.user.create({
+        const adminUser = await prisma.user.create({
             data: {
-                email: "admin@example.com",
-                name: "Admin User",
+                email: 'admin@example.com',
+                name: 'Admin',
                 password: hashedPassword,
-                role: "ADMIN"
+                role: 'ADMIN'
             }
-        })
-
-        console.log("Default admin user created:", {
-            email: admin.email,
-            name: admin.name,
-            role: admin.role
         })
 
         return {
             success: true,
-            message: "Admin user created successfully",
+            message: 'Default admin user created successfully',
             user: {
-                id: admin.id,
-                email: admin.email,
-                name: admin.name,
-                role: admin.role
+                id: adminUser.id,
+                email: adminUser.email,
+                name: adminUser.name,
+                role: adminUser.role
             }
         }
     } catch (error) {
-        console.error("Error creating admin user:", error)
+        console.error('Error ensuring admin exists:', error)
         return {
             success: false,
-            message: "Failed to create admin user",
-            error: error instanceof Error ? error.message : "Unknown error"
-        }
-    }
-}
-
-export async function ensureAdminExists() {
-    try {
-        // Check database connection first
-        await prisma.$connect()
-
-        // Test database with a simple query
-        await prisma.$queryRaw`SELECT 1`
-
-        // Try to seed admin user
-        const result = await seedAdminUser()
-        return result
-    } catch (error) {
-        console.error("Database connection or seeding failed:", error)
-
-        // Check if it's a connection error
-        if (error instanceof Error) {
-            if (error.message.includes("Can't reach database server") ||
-                error.message.includes("ECONNREFUSED") ||
-                error.message.includes("P1001")) {
-                return {
-                    success: false,
-                    message: "Veritabanı bağlantısı kurulamadı. PostgreSQL sunucusunun çalıştığından emin olun.",
-                    error: "Database connection failed",
-                    needsSetup: true
-                }
-            }
-
-            if (error.message.includes("database") && error.message.includes("does not exist")) {
-                return {
-                    success: false,
-                    message: "Veritabanı bulunamadı. 'cms' adında bir veritabanı oluşturun.",
-                    error: "Database does not exist",
-                    needsSetup: true
-                }
-            }
-        }
-
-        return {
-            success: false,
-            message: "Veritabanı hatası oluştu",
-            error: error instanceof Error ? error.message : "Unknown error",
-            needsSetup: true
+            message: 'Failed to ensure admin user exists',
+            error: error instanceof Error ? error.message : 'Unknown error'
         }
     } finally {
-        try {
-            await prisma.$disconnect()
-        } catch {
-            // Ignore disconnect errors
-        }
+        await prisma.$disconnect()
     }
 } 

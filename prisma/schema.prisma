@@ -175,9 +175,51 @@ model Page {
 }
 
 model GlobalDesign {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   customCss String?
   customJs  String?
+
+  // Font Settings
+  titleFontSize   String? @default("36px")
+  titleFontWeight String? @default("600")
+  titlePadding    String? @default("40px 0px")
+
+  paragraphFontSize   String? @default("14px")
+  paragraphFontWeight String? @default("300")
+  paragraphLineHeight String?
+
+  buttonFontSize   String? @default("14px")
+  buttonFontWeight String? @default("400")
+  buttonWidth      String? @default("140px")
+
+  imageRadius String?
+
+  menuFont      String? @default("Poppins")
+  titleFont     String?
+  paragraphFont String?
+
+  // Color Settings
+  siteBackgroundColor String?
+  titleColor          String?
+  paragraphColor      String?
+  hoverColor          String?
+
+  menuBackgroundColor String?
+  menuTextColor       String?
+
+  footerBackgroundColor String?
+  footerTextColor       String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model GlobalLogos {
+  id          String   @id @default(cuid())
+  logo        String? // Ana logo
+  footerLogo  String? // Footer logo
+  favicon     String? // Favicon
+  placeholder String? // Image placeholder
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
