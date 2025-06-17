@@ -44,3 +44,5 @@ next-env.d.ts
 
 # cache invalidation
 .cache-invalidate
+
+/public/images
