@@ -269,6 +269,9 @@
     cursor: pointer;
     transition: all 0.2s ease;
     color: #374151;
+    z-index: 1003;
+    /* Ensure button stays on top */
+    position: relative;
 }
 
 .mobileToggle:hover {
@@ -285,7 +288,7 @@
     height: 100vh;
     background: white;
     transition: left 0.3s ease;
-    z-index: 1001;
+    z-index: 1002;
     overflow-y: auto;
     padding-top: 70px;
 }
@@ -430,9 +433,24 @@
     color: var(--vira-site-main-color, #000);
 }
 
-/* Mobile Overlay - Remove overlay since menu covers full screen */
+/* Mobile Overlay */
 .mobileOverlay {
-    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1001;
+    backdrop-filter: blur(4px);
+}
+
+.mobileOverlay.open {
+    opacity: 1;
+    visibility: visible;
 }
 
 /* Responsive */
@@ -457,11 +475,17 @@
     .mobileMenu {
         padding-top: 60px;
     }
+
+    /* Navbar z-index on mobile */
+    .navbar {
+        z-index: 1004;
+    }
 }
 
 @media (min-width: 769px) {
 
     .mobileMenu,
+    .mobileToggle,
     .mobileOverlay {
         display: none !important;
     }

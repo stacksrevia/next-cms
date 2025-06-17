@@ -232,19 +232,6 @@ export default async function LanguageHomePage({ params }: HomePageProps) {
     return <PageRenderer page={page} languageCode={language} />
 }
 
-// Generate static params for build time
-export async function generateStaticParams() {
-    try {
-        const languages = await prisma.language.findMany({
-            where: { isActive: true },
-            select: { code: true }
-        })
-
-        return languages.map((language) => ({
-            language: language.code,
-        }))
-    } catch (error) {
-        console.error("Error generating static params:", error)
-        return []
-    }
-} 
+// DYNAMIC RENDERING - Her request'te fresh data
+export const dynamic = 'force-dynamic'
+export const revalidate = 0 

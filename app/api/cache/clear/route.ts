@@ -3,14 +3,14 @@ import { clearLanguageCache } from '@/middleware'
 
 export async function POST() {
     try {
-        // Middleware cache'ini temizle
+        // Sadece middleware cache'ini temizle (dynamic rendering'de cache yok)
         clearLanguageCache()
-        
-        console.log('Cache cleared successfully')
-        
-        return NextResponse.json({ 
-            success: true, 
-            message: 'Cache cleared successfully - will refresh in 10 seconds',
+
+        console.log('Middleware cache cleared successfully')
+
+        return NextResponse.json({
+            success: true,
+            message: 'Middleware cache cleared - Dynamic rendering aktif',
             timestamp: Date.now()
         })
     } catch (error) {

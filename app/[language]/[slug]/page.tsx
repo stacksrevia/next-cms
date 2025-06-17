@@ -170,38 +170,6 @@ export default async function PageSlug({ params }: PageProps) {
     return <PageRenderer page={page} languageCode={language} />
 }
 
-// Generate static params for build time
-export async function generateStaticParams() {
-    try {
-        // Aktif dilleri al
-        const languages = await prisma.language.findMany({
-            where: { isActive: true }
-        })
-
-        // Aktif sayfaları al (anasayfa hariç)
-        const globalPages = await prisma.globalPage.findMany({
-            where: {
-                isActive: true,
-                slug: {
-                    not: 'anasayfa' // Anasayfa hariç
-                }
-            }
-        })
-
-        // Her dil ve sayfa kombinasyonu için params oluştur
-        const params = []
-        for (const language of languages) {
-            for (const globalPage of globalPages) {
-                params.push({
-                    language: language.code,
-                    slug: globalPage.slug,
-                })
-            }
-        }
-
-        return params
-    } catch (error) {
-        console.error("Error generating static params:", error)
-        return []
-    }
-} 
+// DYNAMIC RENDERING - Her request'te fresh data
+export const dynamic = 'force-dynamic'
+export const revalidate = 0 

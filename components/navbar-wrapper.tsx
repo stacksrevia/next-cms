@@ -7,8 +7,8 @@ interface NavbarWrapperProps {
 
 export async function NavbarWrapper({ currentLanguage }: NavbarWrapperProps) {
     try {
-        // Sayfaları ve dilleri getir
-        const [pageContents, languages] = await Promise.all([
+        // Sayfaları, dilleri ve anasayfa bilgisini getir
+        const [pageContents, languages, homePage] = await Promise.all([
             prisma.pageContent.findMany({
                 where: {
                     isActive: true,
@@ -44,6 +44,25 @@ export async function NavbarWrapper({ currentLanguage }: NavbarWrapperProps) {
             prisma.language.findMany({
                 where: { isActive: true },
                 orderBy: { name: 'asc' }
+            }),
+            // Anasayfayı bul (isHomePage=true veya order=0)
+            prisma.globalPage.findFirst({
+                where: {
+                    OR: [
+                        { isHomePage: true },
+                        { order: 0 }
+                    ],
+                    isActive: true
+                },
+                include: {
+                    contents: {
+                        where: {
+                            language: {
+                                code: currentLanguage
+                            }
+                        }
+                    }
+                }
             })
         ])
 
@@ -72,9 +91,16 @@ export async function NavbarWrapper({ currentLanguage }: NavbarWrapperProps) {
                     })) || []
             }))
 
-        return <Navbar pages={navPages} currentLanguage={currentLang} />
+        // Anasayfa slug'ını belirle
+        const homePageSlug = homePage?.contents[0]?.slug || 'anasayfa'
+
+        return <Navbar
+            pages={navPages}
+            currentLanguage={currentLang}
+            homePageSlug={homePageSlug}
+        />
     } catch (error) {
         console.error('Error loading navbar:', error)
-        return <Navbar pages={[]} currentLanguage={null} />
+        return <Navbar pages={[]} currentLanguage={null} homePageSlug="anasayfa" />
     }
 } 

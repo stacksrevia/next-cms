@@ -28,9 +28,10 @@ interface Language {
 interface NavbarProps {
     pages: NavPage[]
     currentLanguage: Language | null
+    homePageSlug: string
 }
 
-export function Navbar({ pages, currentLanguage }: NavbarProps) {
+export function Navbar({ pages, currentLanguage, homePageSlug }: NavbarProps) {
     const pathname = usePathname()
     const router = useRouter()
 
@@ -91,32 +92,62 @@ export function Navbar({ pages, currentLanguage }: NavbarProps) {
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as Element
+
+            // Close language menu when clicking outside
             if (!target.closest(`.${styles.languageSelector}`)) {
                 setIsLanguageMenuOpen(false)
             }
-            // Only close mobile dropdowns when clicking outside
+
+            // Close mobile dropdowns when clicking outside
             if (!target.closest(`.${styles.mobileDropdown}`) && isMobileMenuOpen) {
                 setOpenDropdowns(new Set())
             }
         }
 
+        const handleEscapeKey = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setIsMobileMenuOpen(false)
+                setIsLanguageMenuOpen(false)
+                setOpenDropdowns(new Set())
+            }
+        }
+
         document.addEventListener('click', handleClickOutside)
-        return () => document.removeEventListener('click', handleClickOutside)
+        document.addEventListener('keydown', handleEscapeKey)
+
+        return () => {
+            document.removeEventListener('click', handleClickOutside)
+            document.removeEventListener('keydown', handleEscapeKey)
+        }
     }, [isMobileMenuOpen])
 
     // Helper functions
     const getPageUrl = (page: NavPage) => {
-        if (!page.parentId && page.order === 0) {
-            return `/${currentLanguage?.code || 'tr'}`
+        const currentLangPrefix = `/${currentLanguage?.code || 'tr'}`
+
+        // Ana sayfa kontrolü (order 0 veya slug = homePageSlug)
+        if (!page.parentId && (page.order === 0 || page.slug === homePageSlug)) {
+            // Ana sayfa için her zaman / URL'sini kullan
+            return currentLangPrefix
         }
-        return `/${currentLanguage?.code || 'tr'}/${page.slug}`
+
+        // Diğer sayfalar için normal URL
+        return `${currentLangPrefix}/${page.slug}`
     }
 
     const isActivePage = (page: NavPage) => {
-        if (!page.parentId && page.order === 0) {
-            return pathname === `/${currentLanguage?.code || 'tr'}` || pathname === `/${currentLanguage?.code || 'tr'}/`
+        const currentLangPrefix = `/${currentLanguage?.code || 'tr'}`
+
+        // Ana sayfa kontrolü (order 0 veya slug = homePageSlug)
+        if (!page.parentId && (page.order === 0 || page.slug === homePageSlug)) {
+            // Ana sayfa için hem / hem de /slug URL'leri kontrol ediliyor
+            return pathname === currentLangPrefix ||
+                pathname === `${currentLangPrefix}/` ||
+                pathname === `${currentLangPrefix}/${homePageSlug}`
         }
-        const expectedPath = `/${currentLanguage?.code || 'tr'}/${page.slug}`
+
+        // Diğer sayfalar için normal kontrol
+        const expectedPath = `${currentLangPrefix}/${page.slug}`
         return pathname === expectedPath
     }
 
@@ -132,6 +163,7 @@ export function Navbar({ pages, currentLanguage }: NavbarProps) {
         let currentLangCode = currentLanguage.code
         let slug = null
 
+        // Dil kodunu ve slug'ı ayıkla
         if (segments.length > 0 && languages.some(lang => lang.code === segments[0])) {
             currentLangCode = segments[0]
             if (segments.length > 1) {
@@ -141,24 +173,31 @@ export function Navbar({ pages, currentLanguage }: NavbarProps) {
             slug = segments[0]
         }
 
-        if (slug) {
-            try {
-                const response = await fetch(`/api/pages/translate-slug?slug=${slug}&from=${currentLangCode}&to=${language.code}`)
-                if (response.ok) {
-                    const data = await response.json()
-                    if (data.redirectToHome) {
-                        router.push(`/${language.code}`)
-                        return
-                    } else if (data.slug) {
-                        router.push(`/${language.code}/${data.slug}`)
-                        return
-                    }
-                }
-            } catch (error) {
-                console.error('Error translating slug:', error)
-            }
+        // Anasayfa kontrolü
+        if (!slug || slug === homePageSlug) {
+            // Anasayfa için direkt dil kodu ile yönlendir
+            router.push(`/${language.code}`)
+            return
         }
 
+        // Diğer sayfalar için slug çevirisi yap
+        try {
+            const response = await fetch(`/api/pages/translate-slug?slug=${slug}&from=${currentLangCode}&to=${language.code}`)
+            if (response.ok) {
+                const data = await response.json()
+                if (data.redirectToHome) {
+                    router.push(`/${language.code}`)
+                    return
+                } else if (data.slug) {
+                    router.push(`/${language.code}/${data.slug}`)
+                    return
+                }
+            }
+        } catch (error) {
+            console.error('Error translating slug:', error)
+        }
+
+        // Fallback olarak ana sayfaya yönlendir
         router.push(`/${language.code}`)
     }
 
@@ -289,19 +328,51 @@ export function Navbar({ pages, currentLanguage }: NavbarProps) {
         )
     }
 
+    // SSR-friendly render
     if (!isMounted) {
         return (
             <nav className={styles.navbar}>
                 <div className={styles.container}>
-                    <Link href="/" className={styles.logo}>
+                    <Link href={`/${currentLanguage?.code || 'tr'}`} className={styles.logo}>
                         VIRA
                     </Link>
                     <div className={styles.desktopMenu}>
-                        <div style={{ width: '200px', height: '40px', background: '#f3f4f6', borderRadius: '6px' }} />
+                        <ul className={styles.navList}>
+                            {rootPages.map(page => (
+                                <li key={page.id} className={styles.navItem}>
+                                    <Link
+                                        href={getPageUrl(page)}
+                                        className={styles.navLink}
+                                    >
+                                        {page.title}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                        <div className={styles.languageSelector}>
+                            <button className={styles.languageButton}>
+                                {currentLanguage ? (
+                                    <>
+                                        <ReactCountryFlag
+                                            countryCode={currentLanguage.flag}
+                                            svg
+                                            style={{ width: '1em', height: '1em' }}
+                                        />
+                                        <span>{currentLanguage.code.toUpperCase()}</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Globe size={16} />
+                                        <span>Dil</span>
+                                    </>
+                                )}
+                                <ChevronDown className={styles.dropdownIcon} />
+                            </button>
+                        </div>
                     </div>
-                    <div className={styles.mobileToggle} style={{ opacity: 0.5 }}>
+                    <button className={styles.mobileToggle} aria-label="Toggle mobile menu">
                         <Menu size={24} />
-                    </div>
+                    </button>
                 </div>
             </nav>
         )

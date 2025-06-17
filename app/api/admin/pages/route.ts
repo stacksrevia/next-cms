@@ -267,7 +267,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             page: result.globalPage,
             contents: result.contents,
-            message: `Sayfa ${result.contents.length} dilde oluşturuldu`
+            message: `Sayfa ${result.contents.length} dilde oluşturuldu - Dynamic rendering aktif`
         }, { status: 201 })
 
     } catch (error) {

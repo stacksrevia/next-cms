@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server'
 // Desteklenen dilleri cache'lemek için
 let cachedLanguages: { code: string; isDefault: boolean }[] | null = null
 let cacheTime = 0
-const CACHE_DURATION = 30 * 1000 // 30 saniye
+const CACHE_DURATION = 5 * 60 * 1000 // 5 dakika (daha uzun cache)
 
 // Cache'i temizlemek için - export edildi
 export function clearLanguageCache() {
@@ -39,8 +39,8 @@ async function getLanguages(request: NextRequest) {
                 'Accept': 'application/json',
                 'User-Agent': 'NextJS-Middleware/1.0'
             },
-            // Timeout ekle
-            signal: AbortSignal.timeout(5000) // 5 saniye timeout
+            // Timeout'u artır
+            signal: AbortSignal.timeout(15000) // 15 saniye timeout
         })
 
         if (!response.ok) {
@@ -78,6 +78,11 @@ async function getLanguages(request: NextRequest) {
         return validLanguages
     } catch (error) {
         console.error('Error fetching languages in middleware:', error)
+        // Hata durumunda cache'lenmiş veri varsa onu kullan
+        if (cachedLanguages) {
+            console.log('Using cached languages due to error')
+            return cachedLanguages
+        }
         // Fallback olarak Türkçe döndür
         const fallbackLanguages = [{ code: 'tr', isDefault: true }]
         cachedLanguages = fallbackLanguages
@@ -95,8 +100,9 @@ export async function middleware(request: NextRequest) {
         pathname.startsWith('/admin') ||
         pathname.startsWith('/_next/') ||
         pathname.startsWith('/favicon.ico') ||
-        pathname.startsWith('/images/') ||  // Bu satırı ekleyin
-        pathname.includes('.')
+        pathname.startsWith('/images/') ||
+        pathname.startsWith('/styles/') ||
+        pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|css|js|woff|woff2|ttf|eot)$/)
     ) {
         return NextResponse.next()
     }
@@ -150,7 +156,8 @@ export const config = {
          * - _next/image (image optimization files)
          * - favicon.ico (favicon file)
          * - images (static images)
+         * - public files (any file with extension)
          */
-        '/((?!api|_next/static|_next/image|favicon.ico|images).*)',
+        '/((?!api|_next/static|_next/image|favicon.ico|images|.*\\..*).*)',
     ],
 }
