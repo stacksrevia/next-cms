@@ -1,4 +1,5 @@
-DATABASE_URL="postgresql://postgres:2041999@localhost:5432/cms?schema=public"
+
+. DATABASE_URL="postgresql://postgres:2041999@localhost:5432/cms?schema=public"
 
 NEXTAUTH_URL="http://localhost:3000"
 
